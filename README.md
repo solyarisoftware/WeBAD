@@ -1,6 +1,7 @@
 # WeBAD
 
-WeBAD stay for *Web Browser Audio Detection/Speech Recording Events API*.
+WeBAD stay for **We**b **B**rowser **A**udio **D**etection/Speech Recording Events API.
+
 Pronounce it *we-bad* or *web-ad*.
 
 The concept is to experiment how to detect audio 
@@ -28,33 +29,129 @@ and emits these javascript events:
 
 ## Continuous listening vs push-to-talk  
 
-As above event list suggests, the goal is to get user speeches (audio messages) 
-recording in real-time utterances, in *continuous listening* mode, 
-namely: avoiding any wake-word detection algorithm, 
-or with a traditional push-to-talk approach.
+You want to trigger events that need to face these scenarios: 
 
-The best experience could be the *continuous listening* mode, where audio is detected in real-time, 
-just talking in front of the PC (or the tablet/ mobile phone / handset).
-On the other hand, *push-to-talk* is the traditional/safe way to generate audio messages 
-(see radio mobile/walkie-talkie).
+- **Continuous listening (without wake-word detection)**
 
-There are some different possible ways to proceed, 
-based on the microphone / hardware configuration available:
+  The best experience is maybe the *continuous listening* mode, 
+  where audio is detected in real-time, 
+  just talking in front of the PC (or the tablet/ mobile phone / handset).
 
-- Using the browser internal microphone
+  Namely: avoiding any wake-word detection algorithm, 
 
-  In this scenario, the goal is to get a speech generating `recordstart` and `recordstop` events. 
+- Push-to-talk
 
-- Using an external microphone and a push-to-talk hardware button
+  That's the traditional/safe way to generate audio messages 
+  (see radio mobile/walkie-talkie). 
+  The user push a button, start to talk, release the button when finished to talk.
+
+  Note that push to talk could be implemented on the browser in two way:
+  - SW
+    Through a keyboard or a touch screen, the user press a key or touch a (button on the) screen to talk
+
+  - HW
+    The user press a real/hardware button, that maybe mute/un-mute an external mic.
+
+On the basis of the microphone / hardware configuration available,
+there are some different possible ways to proceed:
+
+- 1. Using the PC/handset internal microphone
+
+  In this scenario, the goal is to get a speech generating `recordstart` and `recordstop` events.
+
+- 2. Using an external microphone, bound to a push-to-talk hardware button
  
   In this scenario, the continuous mode could be substituted by a push-to-talk experience,
-  where user has to push a button every time he want to  submit a speech, 
+  where user has to push a real button every time he want to submit a speech, 
   releasing the button when he explicitly want to terminate recording.
   To accomplish this case, the speech recording could start from the `unmutedmic` event
   and it could stop when the `mutedmic` event is triggered. 
  
 
-### What's triggered events ?
+### Signal level and generated events 
+
+The microphone volume detected by the web Audio API scriptprocessor traces these states:
+
+- `mute`
+ 
+  The micro is closed, or muted (volume is `~= 0`), 
+  - via software, by an operating system driver setting
+  - via software, because the application set the mute state by example with a button on the GUI
+  - via hardware, with an external mic input grounded by a push-to-talk button 
+
+- `unmute`
+  the micro is open, or unmuted 
+
+- `silence` 
+ 
+  The micro is open (volume is almost silence `< silence_threshold_value`), 
+  containing just background noise, 
+  not containing sufficient signal power that probabilistically correspond to speech
+
+- `speech` 
+ 
+  The signal level is pretty high, probabilistically corresponding to speech
+ 
+- `clipping` 
+
+  The signal level is too high (volume is  `~= 1`)
+
+```
+    volume level
+0.0 .---->-.----->--.-------->--.-------->--.------> 1.0
+    ^      ^        ^           ^           ^
+    |      |        |           |           |
+    mute   unmute   silence     speech     clipping
+
+```
+
+
+
+## Speech recording rules
+
+Push to talk is simple. It's the user that decides when the speech begin
+and when the speech end, just pressing and releasing the button!
+ 
+`unmutedmic` event starts recording and `mutedmic` event stop recording.
+ 
+```
+             | chunk 1
+           |||
+         ||||||                          
+       |||||||||   |           |     | chunk 2       |
+       |||||||||| || |        ||   | ||              |      chunk 3
+       ||||||||||||| ||       |||| ||||||            | |   |
+     |||||||||||||||||||||    ||||||||||||||         |||||||||||||
+    ^                                                              ^   
+    |                                                              |
+    unmutemic                                                      mutemic
+```
+
+The continuous listening mode is more challenging. A speech is usually determined 
+by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
+
+signal -> pause -> signal -> pause -> ... -> signal -> silence
+
+In this scenario:
+
+- `recordstart` event is generated when a first speech chunk start 
+- `recordstop` event is generated when a successive speech is followed by a pause long `PAUSE_LAG` msecs
+- `recordabort` event is generated when an initial speech chunk has too low volume or is too short.
+
+```
+             | chunk 1
+           |||
+         ||||||                          
+       |||||||||   |           |     | chunk 2       |
+       |||||||||| || |        ||   | ||              |      chunk 3
+       ||||||||||||| ||       |||| ||||||            | |   |
+     |||||||||||||||||||||    ||||||||||||||         |||||||||||||
+     ^                    ^   ^             ^        ^            ^        ^    
+     |                    |                 |                     |        |  
+     recordstart          silence           silence               silence  recordstop
+```
+
+### All events and signal states
 
 ```
                                                                                             ^
@@ -86,29 +183,7 @@ based on the microphone / hardware configuration available:
   unmutemic                                                                     | mutemic
         ^                                                                       ^
         |                                                                       |
-        startrecording                                                          stoprecording
-```
-
-
-## What's a speech recording? 
-
-```
-             |
-           |||
-         ||||||                          
-       |||||||||   |           |     |               |
-       |||||||||| || |        ||   | ||              |
-       ||||||||||||| ||       |||| ||||||            | |   |
-     |||||||||||||||||||      |||| ||||||            ||||| |
-     ||||||||||||||||||||     ||||||||||||           ||||||| |
-     |||||||||||||||||||||    |||||||||||||          ||||||||| |
-     |||||||||||||||||||||    ||||||||||||||         ||||||||||| |
-     |||||||||||||||||||||    ||||||||||||||         |||||||||||||
-  ^  ^                    ^   ^             ^        ^            ^        ^  ^ 
-  |  |                                                            |        |  |
-  unmutemic                                                       silence  |  mutemic
-     |                                                                     |
-     startrecording                                                        stoprecording
+        recordstart                                                             recordstop
 ```
 
 
@@ -121,23 +196,18 @@ based on the microphone / hardware configuration available:
      |                     |   |                          |
      +-----------+---------+   +-------------+------------+
                  | 1                         | 2
-                 |                           |
 +----------------v---------------------------v----------------+
 | web browser                                                 |
-|                                                             |
 |  +-------------------------------------------------------+  |
 |  |                         WeBAD                         |  |
-|  |                                                       |  |
 |  |  +-------------+   +-------------+   +-------------+  |  |
 |  |  |             |   |             |   |             |  |  |
 |  |  |  volume     |   |  audio      |   |  speech     |  |  |
 |  |  |  detection  +--->  detection  +--->  detection  |  |  |
 |  |  |             |   |             |   |             |  |  |
-|  |  |             |   |             |   |             |  |  |
 |  |  +-------------+   +-------------+   +-------------+  |  |
 |  |                                                       |  |
 |  |                 emit javascript events                |  |
-|  |                                                       |  |
 |  +------+--+--+------------+--+-------------+--+--+------+  |
 |         |  |  |            |  |             |  |  |         |
 |         v  v  v            v  v             v  v  v         |
@@ -146,9 +216,7 @@ based on the microphone / hardware configuration available:
 |         mute                                recordabort     |
 |         |  |  |            |  |             |  |  |         |
 |      +--v--v--v------------v--v-------------v--v--v--+      |
-|      |                                               |      |
 |      |            Web  Media Recording API           |      |
-|      |                                               |      |
 |      +------------+----------+---------+-------------+      |
 |                   |          |         |                    |
 |           +-------v-------+  |         |                    |
@@ -165,19 +233,20 @@ based on the microphone / hardware configuration available:
 ```
 
 
-
 ## video demo
 
-- Demo shows triggering of events: `mute`, `silence`, `mute`, `startrecording`, `stoprecording` on Windows 10, Brave (~Chrome) browser
+- Demo shows triggering of events: 
+  `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
+  on Windows 10, Brave (~Chrome) browser
 
   https://youtu.be/P0JY_U8ZUKU
 
-- Demo shows triggering of `mutedmic` e `unmutedmic`, on Windows 10 PC, Brave (~Chrome) browser, using system settings
+- Demo shows triggering of `mutedmic` e `unmutedmic`, 
+  on Windows 10 PC, Brave (~Chrome) browser, using system settings
 
   https://youtu.be/ZUWuLqENtZ8
 
-To run the demo: 
-
+Memo to run the demo:
 ```
 http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
 ```
@@ -369,10 +438,17 @@ Average Signal level     : 0.0900
  
 ```
 
-## Acknoledgments
+## Where is the code?
+
+Coming soon!
+
+
+## Acknowledgments
 
 - I used the volume-meter scriptprocessor of the great Chris Wilson's repo: https://github.com/cwilso/volume-meter
 
+## License
 
+MIT (c) Giorgio Robino
 
 ---
