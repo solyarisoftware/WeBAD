@@ -73,38 +73,33 @@ there are some different possible ways to proceed:
 The microphone volume detected by the web Audio API scriptprocessor traces these states:
 
 - `mute`
- 
   The micro is closed, or muted (volume is `~= 0`), 
   - via software, by an operating system driver setting
   - via software, because the application set the mute state by example with a button on the GUI
   - via hardware, with an external mic input grounded by a push-to-talk button 
 
 - `unmute`
-  the micro is open, or unmuted 
+  The micro is open, or unmuted 
 
 - `silence` 
- 
   The micro is open (volume is almost silence `< silence_threshold_value`), 
   containing just background noise, 
   not containing sufficient signal power that probabilistically correspond to speech
 
 - `speech` 
- 
   The signal level is pretty high, probabilistically corresponding to speech
  
 - `clipping` 
-
   The signal level is too high (volume is  `~= 1`)
 
 ```
-    volume level
+                      volume level
 0.0 .---->-.----->--.-------->--.-------->--.------> 1.0
     ^      ^        ^           ^           ^
     |      |        |           |           |
     mute   unmute   silence     speech     clipping
 
 ```
-
 
 
 ## Speech recording rules
@@ -115,16 +110,18 @@ and when the speech end, just pressing and releasing the button!
 `unmutedmic` event starts recording and `mutedmic` event stop recording.
  
 ```
-             | chunk 1
-           |||
-         ||||||                          
-       |||||||||   |           |     | chunk 2       |
-       |||||||||| || |        ||   | ||              |      chunk 3
-       ||||||||||||| ||       |||| ||||||            | |   |
-     |||||||||||||||||||||    ||||||||||||||         |||||||||||||
+             █ chunk 1
+           █ █
+         █ █ █                           
+       █ █ █ █ █   █                   chunk 2       █
+       █ █ █ █ █   █ █        █       █              █      chunk 3
+       █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
+     █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
+
     ^                                                              ^   
     |                                                              |
     unmutemic                                                      mutemic
+    <--------------------------- recording ------------------------>
 ```
 
 The continuous listening mode is more challenging. A speech is usually determined 
@@ -139,16 +136,17 @@ In this scenario:
 - `recordabort` event is generated when an initial speech chunk has too low volume or is too short.
 
 ```
-             | chunk 1
-           |||
-         ||||||                          
-       |||||||||   |           |     | chunk 2       |
-       |||||||||| || |        ||   | ||              |      chunk 3
-       ||||||||||||| ||       |||| ||||||            | |   |
-     |||||||||||||||||||||    ||||||||||||||         |||||||||||||
-     ^                    ^   ^             ^        ^            ^        ^    
+             █ chunk 1
+           █ █
+         █ █ █                           
+       █ █ █ █ █   █                   chunk 2       █
+       █ █ █ █ █   █ █        █       █              █      chunk 3
+       █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
+     █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
+     ^                    ^                 ^                     ^        ^    
      |                    |                 |                     |        |  
      recordstart          silence           silence               silence  recordstop
+     <------------------------------ recording ---------------------------->
 ```
 
 ### All events and signal states
@@ -157,23 +155,23 @@ In this scenario:
                                                                                             ^
                                                                                             |
                                                                                           clipping
-                                        |                                                   | 
-                |                       |                                clipping threshold v    
-----------------------------------------|--------------------------------------------------- 
-                |                       |                                                   ^ 
-            | | |                       |   |                                               |
-          | | | | |   |             |   | | |                    |                          |
-          | | | | |   |   |         |   | | |                  | | |                        |
-          | | | | | | | | |         |   | | |                  | | |                        |
-        | | | | | | | | | | |       |   | | |          |   |   | | | |                signal/speech
-        | | | | | | | | | | |       | | | | | |        | | |   | | | |                      |
-        | | | | | | | | | | | |     | | | | | | |      | | | | | | | |                      |
-        | | | | | | | | | | | |     | | | | | | |      | | | | | | | | |                    |
-        | | | | | | | | | | | |     | | | | | | |      | | | | | | | | |                    |
-        | | | | | | | | | | | |     | | | | | | |      | | | | | | | | | signal threshold   v
--------------------------------------------------------------------------------------------- 
-    |   | | | | | | | | | | | |     | | | | | | |      | | | | | | | | |                    ^
-  | | | | | | | | | | | | | | |     | | | | | | |      | | | | | | | | | background noise   |   
+                                        █                                                   | 
+                █                       █                                clipping threshold v    
+----------------█-----------------------█--------------------------------------------------- 
+                █                       █                                                   ^ 
+            █ █ █                       █   █                                               |
+          █ █ █ █ █   █             █   █ █ █                    █                          |
+          █ █ █ █ █   █   █         █   █ █ █                  █ █ █                        |
+          █ █ █ █ █ █ █ █ █         █   █ █ █                  █ █ █                        |
+        █ █ █ █ █ █ █ █ █ █ █       █   █ █ █          █   █   █ █ █ █                signal/speech
+        █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █        █ █ █   █ █ █ █                      |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █                      |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █ signal threshold   v
+--------█-█-█-█-█-█-█-█-█-█-█-█-----█-█-█-█-█-█-█------█-█-█-█-█-█-█-█-█-------------------- 
+    █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    ^
+  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █ background noise   |   
   ^     ^----------------------^    ^------------^    ^-----------------^       ^ ^         v 
   |     |                      |    |            |    |                 |       | |
   |     SIGNAL                 |    SIGNAL       |    SIGNAL            |       | |
