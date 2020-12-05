@@ -55,11 +55,11 @@ You want to trigger events that need to face these scenarios:
 On the basis of the microphone / hardware configuration available,
 there are some different possible ways to proceed:
 
-- 1. Using the PC/handset internal microphone
+- Using the PC/handset internal microphone
 
   In this scenario, the goal is to get a speech generating `recordstart` and `recordstop` events.
 
-- 2. Using an external microphone, bound to a push-to-talk hardware button
+- Using an external microphone, bound to a push-to-talk hardware button
  
   In this scenario, the continuous mode could be substituted by a push-to-talk experience,
   where user has to push a real button every time he want to submit a speech, 
@@ -86,28 +86,42 @@ The microphone volume detected by the web Audio API scriptprocessor traces these
   containing just background noise, 
   not containing sufficient signal power that probabilistically correspond to speech
 
-- `speech` 
+- `signal` 
   The signal level is pretty high, probabilistically corresponding to speech
  
 - `clipping` 
   The signal level is too high (volume is  `~= 1`)
 
 ```
-                      volume level
-0.0 .---->-.----->--.-------->--.-------->--.------> 1.0
-    ^      ^        ^           ^           ^
-    |      |        |           |           |
-    mute   unmute   silence     speech     clipping
-
+       volume
+         ^
+     1.0 |                                                                                                 
+         |                                       █
+         |               █                       █
+         |               █                       █
+clipping |               █                       █
+  signal |           █ █ █                       █   █
+    |    |         █ █ █ █ █   █             █   █ █ █                    █
+    |    |         █ █ █ █ █   █             █   █ █ █                  █ █ █
+  speech |         █ █ █ █ █ █ █             █   █ █ █                  █ █ █
+    |    |       █ █ █ █ █ █ █ █ █           █   █ █ █              █   █ █ █ █
+    |    |       █ █ █ █ █ █ █ █ █ █         █ █ █ █ █ █          █ █ █ █ █ █ █
+  signal |       █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █          █ █ █ █ █ █ █  
+ silence |   █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █
+  unmute | █ █ █ █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █  █   █ █ █ █ █ █ █ █ █
+mute 0.0 +------------------------------------------------------------------------> time  
 ```
 
 
 ## Speech recording rules
 
+### Push-to-talk recording
+
 Push to talk is simple. It's the user that decides when the speech begin
 and when the speech end, just pressing and releasing the button!
  
-`unmutedmic` event starts recording and `mutedmic` event stop recording.
+- `unmutedmic` event starts recording 
+- `mutedmic` event stop recording
  
 ```
              █ chunk 1
@@ -123,6 +137,14 @@ and when the speech end, just pressing and releasing the button!
     unmutemic                                                      mutemic
     <--------------------------- recording ------------------------>
 ```
+
+```javascript
+document.addEventListener('mutedmic', event => startRecording(event) )
+document.addEventListener('unmutedmic', event => stopRecording(event) )
+```
+
+
+### Continuous-listening recording
 
 The continuous listening mode is more challenging. A speech is usually determined 
 by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
@@ -149,6 +171,12 @@ In this scenario:
      <------------------------------ recording ---------------------------->
 ```
 
+```javascript
+document.addEventListener('recordstart', event => startRecording(event) )
+document.addEventListener('recordstop', event => stopRecording(event) )
+document.addEventListener('recordabort', event => abortRecording(event) )
+```
+
 ### All events and signal states
 
 ```
@@ -171,7 +199,7 @@ In this scenario:
         █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █ signal threshold   v
 --------█-█-█-█-█-█-█-█-█-█-█-█-----█-█-█-█-█-█-█------█-█-█-█-█-█-█-█-█-------------------- 
     █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    ^
-  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █ background noise   |   
+  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █ █ █ █ background noise   |   
   ^     ^----------------------^    ^------------^    ^-----------------^       ^ ^         v 
   |     |                      |    |            |    |                 |       | |
   |     SIGNAL                 |    SIGNAL       |    SIGNAL            |       | |
@@ -244,11 +272,21 @@ In this scenario:
 
   https://youtu.be/ZUWuLqENtZ8
 
+
+## Serve demo page using HTTPS 
+
 Memo to run the demo:
 ```
 http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+$ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+Starting up http-server, serving ./ through https
+Available on:
+  https://127.0.0.1:8443
+  https://192.168.1.134:8443
+Hit CTRL-C to stop the server
 ```
 
+On the browser: `https://192.168.1.134:8443/demo.html`
 
 ## console log (excerpt)
 

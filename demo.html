@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+
+	<head>
+		<title>WeBAD Demo</title>
+		<style>
+      body {
+        font-size: 18px;
+        font-family: 'courier'; /*"Lucida Console", Courier, monospace;*/
+        background-color: black;
+        color: white;
+      }
+
+      button {
+        font-size: 18px;
+        font-family: 'courier'; 
+        color: white;
+        background-color: white /*#4CAF50;  Green */
+        border: none;
+        color: black;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      #start {
+        background-color: green 
+      }  
+
+      #startconsoledebug {
+        background-color: yellow 
+      }  
+
+      #stopconsoledebug {
+        background-color: orange 
+      }  
+
+      #microphonestatus, #audiostatus, #recording {
+        font-size: 36px;
+        font-family: 'courier'; 
+        background-color: black;
+        color: white;
+      }
+
+      td, th {
+        border: 1px solid;
+        text-align: left;
+        padding: 10px;
+      }
+    </style>
+	</head>
+
+	<body>
+		<h1>WeBAD Demo</h1>
+		<h2>Web Browser Audio Detection/Speech Recording Events API</h2>
+    <div>
+      This sample shows how to implement an audio/speech detection in the browser, using a ScriptProcessor (Web Audio API).<br>
+      Github repo: <a href="https://github.com/solyarisoftware/webad">https://github.com/solyarisoftware/webad</a><br>
+      <br>
+      To open/close the console: CTRL-SHIFT-J on Chrome, or CTRL-SHIFT-K on Firefox.
+    </div>
+    <br>
+    <button id="start">START (required on Chrome)</button>
+    <button id="startconsoledebug">enable console logs</button>
+    <button id="stopconsoledebug">disable console logs</button>
+    <br>
+    <br>
+    <div>
+      REAL-TIME EVENTS/STATUS 
+      <table>
+        <tr>
+          <th>Status</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>microphone</td>
+          <td><a id="microphonestatus"></a></td>
+        </tr>
+        <tr>
+          <td>audio</td>
+          <td><a id="audiostatus"></a></td>
+        </tr>
+        <tr>
+          <td>recording</td>
+          <td><a id="recording"></a></td>
+        </tr>
+    </table>
+    </div>
+
+    <br>
+    
+    <div>
+      CONFIGURATION PARAMETERS
+      <table>
+        <tr>
+          <th>Parameter</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>SAMPLE_POLLING_MSECS</td>
+          <td><a id="SAMPLE_POLLING_MSECS"></a></td>
+        </tr>
+        <tr>
+          <td>MAX_INTERSPEECH_SILENCE_MSECS</td>
+          <td><a id="MAX_INTERSPEECH_SILENCE_MSECS"></a></td>
+        </tr>
+        <tr>
+          <td>MIN_SIGNAL_DURATION</td>
+          <td><a id="MIN_SIGNAL_DURATION"></a></td>
+        </tr>
+        <tr>
+          <td>VOLUME_SIGNAL</td>
+          <td><a id="VOLUME_SIGNAL"></a></td>
+        </tr>
+        <tr>
+          <td>VOLUME_SILENCE</td>
+          <td><a id="VOLUME_SILENCE"></a></td>
+        </tr>
+        <tr>
+          <td>VOLUME_MUTE</td>
+          <td><a id="VOLUME_MUTE"></a></td>
+        </tr>
+        <tr>
+          <td>MIN_AVERAGE_SIGNAL_VOLUME</td>
+          <td><a id="MIN_AVERAGE_SIGNAL_VOLUME"></a></td>
+        </tr>
+    </table>
+    </div>
+
+    <br>
+
+    <div>
+      EVENTS EMITTED
+      <table>
+        <tr>
+          <th>Event name</th>
+          <th>Category</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>signal</td>
+          <td>audio sample</td>
+          <td>volume is high, so probably user is speaking</td>
+        </tr>
+        <tr>
+          <td>silence</td>
+          <td>audio sample</td>
+          <td>volume is pretty low, the mic is on but there is not speech</td>
+        </tr>
+        <tr>
+          <td>mute</td>
+          <td>audio sample</td>
+          <td>volume is almost zero, the mic is off</td>
+        </tr>
+        <tr>
+          <td>unmutedmic</td>
+          <td>microphone</td>
+          <td>micro is UNMUTED (passing from OFF to ON)</td>
+        </tr>
+        <tr>
+          <td>mutedmic</td>
+          <td>microphone</td>
+          <td>micro is MUTED (passing from ON to OFF)</td>
+        </tr>
+        <tr>
+          <td>recordstart</td>
+          <td>recording</td>
+          <td>speech recording start</td>
+        </tr>
+        <tr>
+          <td>recordstop</td>
+          <td>recording</td>
+          <td>speech recording stop</td>
+        </tr>
+        <tr>
+          <td>recordabort</td>
+          <td>recording</td>
+          <td>speech recording aborted</td>
+        </tr>
+    </table>
+    </div>
+
+    <!-- 
+		<canvas id="meter" width="500" height="50"></canvas>
+    -->
+
+		<script src="volume-meter.js"></script>
+		<script src="audioDetectionConfig.js"></script>
+		<script src="audioDetection.js"></script>
+		<script src="audioStream.js"></script>
+
+		<script src="demoAudioDetectionListeners.js"></script>
+		<script src="demo.js"></script>
+	</body>
+</html>
