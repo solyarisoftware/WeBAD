@@ -1,15 +1,20 @@
 # WeBAD
 
 WeBAD stay for **We**b **B**rowser **A**udio **D**etection/Speech Recording Events API.
-
 Pronounce it *we-bad* or *web-ad*.
 
-The concept is to experiment how to detect audio 
-and especially speech in *continuous listening* mode, on the browser, 
-simply using a Javascript program above the Web audio API.
+## What's the problem of detecting speech?
 
-The solution here proposed is to get the audio volume of the microphone in real-time, 
-using a Web Audio API scriptprocessor that calculate RMS volume. 
+You want *continuous listening* audio and speech detection system,
+voiceonly / voicefirst, touch-less / keyboard-less solution,
+on the browser,
+without using any wake-word system,
+using a javascript-only program, using Web audio API.
+
+## A simple solution
+
+The WeBAD solution here proposed is to get the audio volume of the microphone in real-time, 
+using a Web Audio API script processor that calculate RMS volume. 
 A cyclic task, running every N msecs, does some logic above the current volume RMS sample 
 and emits these javascript events:
 
@@ -259,26 +264,49 @@ document.addEventListener('recordabort', event => abortRecording(event) )
 ```
 
 
-## video demo
+## How to use WeBAD
 
-- Demo shows triggering of events: 
-  `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
-  on Windows 10, Brave (~Chrome) browser
+### The javascript library 
 
-  https://youtu.be/P0JY_U8ZUKU
+Just insert in your HTML these files:
 
-- Demo shows triggering of `mutedmic` e `unmutedmic`, 
-  on Windows 10 PC, Brave (~Chrome) browser, using system settings
-
-  https://youtu.be/ZUWuLqENtZ8
-
-
-## Serve demo page using HTTPS 
-
-Memo to run the demo:
+```html
+<html>
+	<body>
+		<script src="volume-meter.js"></script>
+		<script src="audioDetectionConfig.js"></script>
+		<script src="audioDetection.js"></script>
+		<script src="audioStream.js"></script>
+	</body>
+</html>
 ```
-http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+
+### The HTML demo 
+
+An usage example of WeBAD library is in `demo.html`. 
+
+The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
+
+```html
+<html>
+	<body>
+		<script src="volume-meter.js"></script>
+		<script src="audioDetectionConfig.js"></script>
+		<script src="audioDetection.js"></script>
+		<script src="audioStream.js"></script>
+
+		<script src="demoAudioDetectionListeners.js"></script>
+		<script src="demo.js"></script>
+	</body>
+</html>
+```
+
+#### Serve demo page using HTTPS 
+
+To run the demo asa page served by an HTTPS server:
+```
 $ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+
 Starting up http-server, serving ./ through https
 Available on:
   https://127.0.0.1:8443
@@ -286,9 +314,9 @@ Available on:
 Hit CTRL-C to stop the server
 ```
 
-On the browser: `https://192.168.1.134:8443/demo.html`
+On the browser, goto the page: `https://192.168.1.134:8443/demo.html`
 
-## console log (excerpt)
+#### console log (excerpt)
 
 ```
 
@@ -473,15 +501,24 @@ Signal Duration in msecs : 1259
 Average Signal level     : 0.0900
  
 ```
+#### Youtube video demos
 
-## Where is the code?
+- Demo shows triggering of events: 
+  `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
+  on Windows 10, Brave (~Chrome) browser
 
-Coming soon!
+  https://youtu.be/P0JY_U8ZUKU
+
+- Demo shows triggering of `mutedmic` e `unmutedmic`, 
+  on Windows 10 PC, Brave (~Chrome) browser, using system settings
+
+  https://youtu.be/ZUWuLqENtZ8
 
 
 ## Acknowledgments
 
-- I used the volume-meter scriptprocessor of the great Chris Wilson's repo: https://github.com/cwilso/volume-meter
+I used the volume-meter Web Audio API scriptprocessor written by Chris Wilson here: https://github.com/cwilso/volume-meter
+
 
 ## License
 
