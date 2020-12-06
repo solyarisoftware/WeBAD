@@ -1,61 +1,76 @@
 # WeBAD
 
-WeBAD stay for **We**b **B**rowser **A**udio **D**etection/Speech Recording Events API.
+
+**WeBAD** stay for **We**b **B**rowser **A**udio **D**etection/Speech Recording Events API.
+
 Pronounce it *we-bad* or *web-ad*.
 
-## What's the problem of detecting speech?
+## How to detect speech, on the browser?
 
-You want *continuous listening* audio and speech detection system,
-voiceonly / voicefirst, touch-less / keyboard-less solution,
-on the browser,
-without using any wake-word system,
-using a javascript-only program, using Web audio API.
+Let's sketch possible scenarios:
 
-## A simple solution
+1. Wake word detection
 
-The WeBAD solution here proposed is to get the audio volume of the microphone in real-time, 
-using a Web Audio API script processor that calculate RMS volume. 
-A cyclic task, running every N msecs, does some logic above the current volume RMS sample 
-and emits these javascript events:
+  Currently this is considered the common way to push speech messages on a voice interfaced system.
+  Wake word detection, especially if you want to have your own word sequences, 
+  need a specialized training of a neural net and a cpu-intensive run-time engine 
+  that has to run on the browser. This project do not face this path.
 
-- AUDIO VOLUME
-  - `signal`  -> audio volume is high, so probably user is speaking
-  - `silence` -> audio volume is pretty low, the mic is on but there is not speech
-  - `mute`    -> audio volume is almost zero, the mic is off
-
-- MICROPHONE STATUS
-  - `unmutedmic`  -> microphone is UNMUTED (passing from OFF to ON)
-  - `mutedmic` -> microphone is MUTED (passing from ON to OFF)
-
-- RECORDING
-  - `recordstart` -> speech recording START
-  - `recordstop`  -> speech recording STOP (success, recording seems a valid speech)
-  - `recordabort` -> speech recording ABORTED (because level is too low or audio duration length too short)
-
-## Continuous listening vs push-to-talk  
-
-You want to trigger events that need to face these scenarios: 
-
-- **Continuous listening (without wake-word detection)**
-
-  The best experience is maybe the *continuous listening* mode, 
-  where audio is detected in real-time, 
-  just talking in front of the PC (or the tablet/ mobile phone / handset).
-
-  Namely: avoiding any wake-word detection algorithm, 
-
-- Push-to-talk
+2. Push-to-talk
 
   That's the traditional/safe way to generate audio messages 
   (see radio mobile/walkie-talkie). 
   The user push a button, start to talk, release the button when finished to talk.
-
   Note that push to talk could be implemented on the browser in two way:
-  - SW
-    Through a keyboard or a touch screen, the user press a key or touch a (button on the) screen to talk
 
-  - HW
+  - 2.1 Software-button push-to-talk 
+
+    That's the simplest approach on GUI interface. Consider a web browser, 
+    on a mobile device you have a touch interface, 
+    on a personal computer  you have a keyboard/mouse.
+    So you can have an HTML button that, when pressed, triggers a recording. 
+    Through a keyboard or a touch screen, 
+    the user press a key or touch a (button on the) screen to talk.
+    But you finally want a touch-less / keyboard-less solution!
+
+  - 2.2 Hardware-button push-to-talk 
+
     The user press a real/hardware button, that maybe mute/un-mute an external mic.
+
+3. Continuous listening (without wake-word detection)
+
+  The best experience is maybe the *continuous listening* mode, 
+  where audio is detected in real-time, 
+  just talking in front of the PC (or the tablet/ mobile phone / handset).
+  Namely: avoiding any wake-word detection algorithm.
+
+## The proposed solution
+
+Let's focus on these cases:
+
+- Continuous listening (without wake-word detection)
+- Hardware-button push-to-talk 
+
+The WeBAD solution here proposed is to get the audio volume of the microphone in real-time, 
+using a Web Audio API script processor that calculate RMS volume. 
+A cyclic task, running every N msecs, does some logic above the current volume RMS sample 
+and generates these javascript events:
+
+- AUDIO VOLUME
+  - `signal`, audio volume is high, so probably user is speaking
+  - `silence`, audio volume is pretty low, the mic is on but there is not speech
+  - `mute`, audio volume is almost zero, the mic is off
+
+- MICROPHONE STATUS
+  - `unmutedmic`, microphone is UNMUTED (passing from OFF to ON)
+  - `mutedmic`, microphone is MUTED (passing from ON to OFF)
+
+- RECORDING
+  - `recordstart`, speech recording START
+  - `recordstop`, speech recording STOP (success, recording seems a valid speech)
+  - `recordabort`, speech recording ABORTED (because level is too low or audio duration length too short)
+
+### Internal / external microphone  
 
 On the basis of the microphone / hardware configuration available,
 there are some different possible ways to proceed:
@@ -72,13 +87,12 @@ there are some different possible ways to proceed:
   To accomplish this case, the speech recording could start from the `unmutedmic` event
   and it could stop when the `mutedmic` event is triggered. 
  
+### Signal levels and generated events 
 
-### Signal level and generated events 
-
-The microphone volume detected by the web Audio API scriptprocessor traces these states:
+The microphone volume detected by the web Audio API script processor traces these states:
 
 - `mute`
-  The micro is closed, or muted (volume is `~= 0`), 
+  The microphone is closed, or muted (volume is `~= 0`), 
   - via software, by an operating system driver setting
   - via software, because the application set the mute state by example with a button on the GUI
   - via hardware, with an external mic input grounded by a push-to-talk button 
@@ -87,7 +101,7 @@ The microphone volume detected by the web Audio API scriptprocessor traces these
   The micro is open, or unmuted 
 
 - `silence` 
-  The micro is open (volume is almost silence `< silence_threshold_value`), 
+  The microphone is open (volume is almost silence `< silence_threshold_value`), 
   containing just background noise, 
   not containing sufficient signal power that probabilistically correspond to speech
 
@@ -144,10 +158,15 @@ and when the speech end, just pressing and releasing the button!
 ```
 
 ```javascript
-document.addEventListener('mutedmic', event => startRecording(event) )
-document.addEventListener('unmutedmic', event => stopRecording(event) )
-```
+document.addEventListener('umutedmic', event => {
+  // start audio recording 
+})
 
+document.addEventListener('mutedmic', event => {
+  // stop recording 
+  // process the speech
+})
+```
 
 ### Continuous-listening recording
 
@@ -177,9 +196,18 @@ In this scenario:
 ```
 
 ```javascript
-document.addEventListener('recordstart', event => startRecording(event) )
-document.addEventListener('recordstop', event => stopRecording(event) )
-document.addEventListener('recordabort', event => abortRecording(event) )
+document.addEventListener('recordstart', event => { 
+  // start audio recording 
+})
+
+document.addEventListener('recordstop', event => {
+  // stop recording 
+  // process the speech
+})
+
+document.addEventListener('recordabort', event => {
+  // audio recording is not a valid speech
+})
 ```
 
 ### All events and signal states
@@ -218,7 +246,13 @@ document.addEventListener('recordabort', event => abortRecording(event) )
 ```
 
 
-## Architecture
+## Architectural notes
+
+WeBAD just triggers javascript events, on the browser. 
+Is out of scope of this project:
+- how to use events to record the audio recordings
+- how to use/process blob audio messages 
+  (probably you want to send them to a backend server via socketio or websockets?).
 
 ```
      +---------------------+   +--------------------------+
@@ -228,7 +262,8 @@ document.addEventListener('recordabort', event => abortRecording(event) )
      +-----------+---------+   +-------------+------------+
                  | 1                         | 2
 +----------------v---------------------------v----------------+
-| web browser                                                 |
+|          web browser on a mobile device or a PC             |
+|                                                             |
 |  +-------------------------------------------------------+  |
 |  |                         WeBAD                         |  |
 |  |  +-------------+   +-------------+   +-------------+  |  |
@@ -253,57 +288,60 @@ document.addEventListener('recordabort', event => abortRecording(event) )
 |           +-------v-------+  |         |                    |
 |           | audio message |  |         |                    |
 |           +---------------+  |         |                    |
-|                     +--------v------+  |                    |
-|                     | audio message |  |                    |
-|                     +---------------+  |                    |
-|                                +-------v-------+            |
-|                                | audio message |            |
-|                                +---------------+            |
+|                   | +--------v------+  |                    |
+|                   | | audio message |  |                    |
+|                   | +---------------+  |                    |
+|                   |          | +-------v-------+            |
+|                   |          | | audio message |            |
+|                   |          | +---------------+            |
++-------------------|----------|---------|--------------------+
+                    |          |         |
+                    |          |         |
++-------------------v----------v---------v--------------------+
+|                                                             |
+|              backend server/homebase processing             |
+|                                                             |
 +-------------------------------------------------------------+
 
 ```
 
+## Install and use
 
-## How to use WeBAD
+## Install this repo
 
-### The javascript library 
-
-Just insert in your HTML these files:
-
-```html
-<html>
-	<body>
-		<script src="volume-meter.js"></script>
-		<script src="audioDetectionConfig.js"></script>
-		<script src="audioDetection.js"></script>
-		<script src="audioStream.js"></script>
-	</body>
-</html>
+```bash
+$ git clone https://github.com/solyarisoftware/webad && cd webad
 ```
 
-### The HTML demo 
+### Use the javascript library 
+
+1. Just insert in your HTML these files:
+
+  ```html
+  <html>
+    <body>
+      <script src="volume-meter.js"></script>
+      <script src="audioDetectionConfig.js"></script>
+    <script src="audioDetection.js"></script>
+    <script src="audioStream.js"></script>
+    </body>
+  </html>
+  ```
+
+2. Manage events generated by WeBAD.
+
+
+### Run the demo 
 
 An usage example of WeBAD library is in `demo.html`. 
 
-The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
+BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
 
-```html
-<html>
-	<body>
-		<script src="volume-meter.js"></script>
-		<script src="audioDetectionConfig.js"></script>
-		<script src="audioDetection.js"></script>
-		<script src="audioStream.js"></script>
-
-		<script src="demoAudioDetectionListeners.js"></script>
-		<script src="demo.js"></script>
-	</body>
-</html>
+```bash
+$ firefox demo.html
 ```
 
-#### Serve demo page using HTTPS 
-
-To run the demo asa page served by an HTTPS server:
+To run the demo as a page served by an HTTPS server:
 ```
 $ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
 
