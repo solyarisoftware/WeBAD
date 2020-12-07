@@ -9,21 +9,21 @@ Pronounce it *we-bad* or *web-ad*.
 
 Let's sketch possible scenarios:
 
-1. Wake word detection
+- Wake word detection
 
   Currently this is considered the common way to push speech messages on a voice interfaced system.
   Wake word detection, especially if you want to have your own word sequences, 
   need a specialized training of a neural net and a cpu-intensive run-time engine 
   that has to run on the browser. This project do not face this path.
 
-2. Push-to-talk
+- Push-to-talk
 
   That's the traditional/safe way to generate audio messages 
   (see radio mobile/walkie-talkie). 
   The user push a button, start to talk, release the button when finished to talk.
   Note that push to talk could be implemented on the browser in two way:
 
-  - 2.1 Software-button push-to-talk 
+  - Software-button push-to-talk 
 
     That's the simplest approach on GUI interface. Consider a web browser, 
     on a mobile device you have a touch interface, 
@@ -33,26 +33,42 @@ Let's sketch possible scenarios:
     the user press a key or touch a (button on the) screen to talk.
     But you finally want a touch-less / keyboard-less solution!
 
-  - 2.2 Hardware-button push-to-talk 
+  - **Hardware-button push-to-talk**
 
     The user press a real/hardware button, that maybe mute/un-mute an external mic.
 
-3. Continuous listening (without wake-word detection)
+- **Continuous listening** (without wake-word detection)
 
   The best experience is maybe the *continuous listening* mode, 
   where audio is detected in real-time, 
   just talking in front of the PC (or the tablet/ mobile phone / handset).
   Namely: avoiding any wake-word detection algorithm.
 
+
+# Which are the possible scenarios?
+
+Let's focus on these two specific application contexts:
+
+- **Browser-based voice-interface client for a personal assistant**
+
+  Continuous listening is probably the more natural 
+  voice-based interface for a conversational personal assistant.
+  Applicable when the user is in front of 
+  a personal computer (or a mobile phone) in a pretty quiet environment, 
+  by example in a room apartment or a quite office, or inside a vehicle.
+
+- **Mobile device voice-interface client for operators that can't use the touch-screen**
+
+  The target scenario is a situation where the user can't easily touch the screen of a mobile device.
+  The voice interface is through an external micro equipped with a push-to talk button. 
+
+
 ## The proposed solution
 
-Let's focus on these cases:
-
-- Continuous listening (without wake-word detection)
-- Hardware-button push-to-talk 
-
-The WeBAD solution here proposed is to get the audio volume of the microphone in real-time, 
+The technical solution proposed is a javascript program running on the browser 
+to get the audio volume of the microphone in real-time, 
 using a Web Audio API script processor that calculate RMS volume. 
+
 A cyclic task, running every N msecs, does some logic above the current volume RMS sample 
 and generates these javascript events:
 
@@ -70,7 +86,14 @@ and generates these javascript events:
   - `recordstop`, speech recording STOP (success, recording seems a valid speech)
   - `recordabort`, speech recording ABORTED (because level is too low or audio duration length too short)
 
-### Internal / external microphone  
+
+WeBAD just triggers above listed events. What is out of scope of this project:
+- how to use events to record the audio recordings
+- how to use/process blob audio messages 
+  (probably you want to send them to a backend server via socketio or websockets).
+
+
+### Internal or external microphone?
 
 On the basis of the microphone / hardware configuration available,
 there are some different possible ways to proceed:
@@ -87,12 +110,12 @@ there are some different possible ways to proceed:
   To accomplish this case, the speech recording could start from the `unmutedmic` event
   and it could stop when the `mutedmic` event is triggered. 
  
-### Signal levels and generated events 
+### Signal level states
 
 The microphone volume detected by the web Audio API script processor traces these states:
 
 - `mute`
-  The microphone is closed, or muted (volume is `~= 0`), 
+  The microphone is closed, or muted (volume is ~= 0), 
   - via software, by an operating system driver setting
   - via software, because the application set the mute state by example with a button on the GUI
   - via hardware, with an external mic input grounded by a push-to-talk button 
@@ -101,7 +124,7 @@ The microphone volume detected by the web Audio API script processor traces thes
   The micro is open, or unmuted 
 
 - `silence` 
-  The microphone is open (volume is almost silence `< silence_threshold_value`), 
+  The microphone is open. Volume is almost silence (less than silence_threshold_value), 
   containing just background noise, 
   not containing sufficient signal power that probabilistically correspond to speech
 
@@ -109,7 +132,7 @@ The microphone volume detected by the web Audio API script processor traces thes
   The signal level is pretty high, probabilistically corresponding to speech
  
 - `clipping` 
-  The signal level is too high (volume is  `~= 1`)
+  The signal level is too high (volume is ~= 1)
 
 ```
        volume
@@ -210,7 +233,7 @@ document.addEventListener('recordabort', event => {
 })
 ```
 
-### All events and signal states
+### All signal states and events
 
 ```
                                                                                             ^
@@ -246,13 +269,7 @@ document.addEventListener('recordabort', event => {
 ```
 
 
-## Architectural notes
-
-WeBAD just triggers javascript events, on the browser. 
-Is out of scope of this project:
-- how to use events to record the audio recordings
-- how to use/process blob audio messages 
-  (probably you want to send them to a backend server via socketio or websockets?).
+## Architecture
 
 ```
      +---------------------+   +--------------------------+
@@ -305,9 +322,9 @@ Is out of scope of this project:
 
 ```
 
-## Install and use
+## Installation and usage
 
-## Install this repo
+### Install
 
 ```bash
 $ git clone https://github.com/solyarisoftware/webad && cd webad
@@ -315,7 +332,7 @@ $ git clone https://github.com/solyarisoftware/webad && cd webad
 
 ### Use the javascript library 
 
-1. Just insert in your HTML these files:
+- Just insert in your HTML these files:
 
   ```html
   <html>
@@ -328,7 +345,7 @@ $ git clone https://github.com/solyarisoftware/webad && cd webad
   </html>
   ```
 
-2. Manage events generated by WeBAD.
+- Manage events generated by WeBAD.
 
 
 ### Run the demo 
@@ -356,8 +373,8 @@ On the browser, goto the page: `https://192.168.1.134:8443/demo.html`
 
 #### console log (excerpt)
 
+Example of a successful recording:
 ```
-
 silence 1606583471392 10  0.003169284 -50
 silence 1606583471476 11  0.003678703 -49
 silence 1606583471558 12  0.004238884 -47
@@ -418,92 +435,10 @@ Total Duration in msecs  : 4128
 Signal Duration in msecs : 3578
 Average Signal level     : 0.0819
 Average Signal dB        : -22
+```
 
-silence 1606583475857 8   0.004476706 -47
-silence 1606583475943 9   0.003678702 -49
-silence 1606583476028 10  0.004149900 -48
-silence 1606583476110 11  0.004223898 -47
-silence 1606583476198 12  0.004649533 -47
-silence 1606583476280 13  0.003785960 -48
-silence 1606583476368 14  0.003742043 -49
-RECORDING START
-SIGNAL  1606583476459 1   0.094886370 -20 ██████████████████
-SIGNAL  1606583476547 2   0.144821317 -17 ████████████████████████████
-SIGNAL  1606583476630 3   0.101134127 -20 ████████████████████
-SIGNAL  1606583476712 4   0.067094446 -23 █████████████
-SIGNAL  1606583476794 5   0.046854554 -27 █████████
-SIGNAL  1606583476876 6   0.031084268 -30 ██████
-SIGNAL  1606583476958 7   0.021707304 -33 ████
-SIGNAL  1606583477040 8   0.013681016 -37 ██
-silence 1606583477128 1   0.009553963 -40
-silence 1606583477210 2   0.006021380 -44
-silence 1606583477293 3   0.004318002 -47
-silence 1606583477375 4   0.006236917 -44
-silence 1606583477456 5   0.004355472 -47
-silence 1606583477538 6   0.005018261 -46
-silence 1606583477620 7   0.004187944 -48
-RECORDING ABORT
-Error reason             : signal duration (611) < MIN_SIGNAL_DURATION (700)
-Total Duration in msecs  : 1161
-Signal Duration in msecs : 611
-Average Signal level     : 0.0652
-Average Signal dB        : -24
-
-silence 1606583477705 8   0.005247298 -46
-silence 1606583477788 9   0.005002713 -46
-silence 1606583477869 10  0.004804194 -46
-RECORDING START
-SIGNAL  1606583480420 1   0.091071086 -21 ██████████████████
-SIGNAL  1606583480503 2   0.160458414 -16 ████████████████████████████████
-SIGNAL  1606583480586 3   0.112054095 -19 ██████████████████████
-SIGNAL  1606583480668 4   0.074338976 -23 ██████████████
-SIGNAL  1606583480750 5   0.049317995 -26 █████████
-SIGNAL  1606583480832 6   0.032718566 -30 ██████
-SIGNAL  1606583480914 7   0.022848595 -33 ████
-SIGNAL  1606583480996 8   0.015158225 -36 ███
-SIGNAL  1606583481077 9   0.010056276 -40 ██
-silence 1606583481159 1   0.007225368 -43
-silence 1606583481241 2   0.007065454 -43
-SIGNAL  1606583481324 1   0.010269605 -40 ██
-SIGNAL  1606583481407 2   0.011462841 -39 ██
-SIGNAL  1606583481489 3   0.013908580 -37 ██
-silence 1606583481572 1   0.009712880 -40
-silence 1606583481654 2   0.006913196 -43
-silence 1606583481735 3   0.008786999 -41
-silence 1606583481816 4   0.008154145 -42
-SIGNAL  1606583481926 1   0.011119918 -39 ██
-silence 1606583482009 1   0.008500690 -41
-silence 1606583482092 2   0.009422355 -41
-silence 1606583482175 3   0.008503675 -41
-silence 1606583482257 4   0.007532468 -42
-silence 1606583482340 5   0.008574968 -41
-silence 1606583482423 6   0.007613792 -42
-silence 1606583482506 7   0.007681328 -42
-RECORDING STOP
-Total Duration in msecs  : 2086
-Signal Duration in msecs : 1536
-Average Signal level     : 0.0473
-Average Signal dB        : -27
-
-silence 1606583482598 8   0.006516270 -44
-silence 1606583482680 9   0.008323560 -42
-silence 1606583482762 10  0.009014556 -41
-RECORDING START
-SIGNAL  1606583482855 1   0.010591813 -40 ██
-SIGNAL  1606583482938 2   0.011537645 -39 ██
-silence 1606583483024 1   0.009621478 -40
-silence 1606583483108 2   0.006719037 -43
-silence 1606583483190 3   0.006885541 -43
-silence 1606583483272 4   0.007841863 -42
-silence 1606583483354 5   0.005909827 -45
-silence 1606583483435 6   0.004969057 -46
-silence 1606583483517 7   0.004062877 -48
-RECORDING ABORT
-Error reason             : signal duration (112) < MIN_SIGNAL_DURATION (700)
-Total Duration in msecs  : 662
-Signal Duration in msecs : 112
-Average Signal level     : 0.0111
-Average Signal dB        : -39
+Example of another successful recording:
+```
 
 silence 1606583483600 8   0.004910713 -46
 silence 1606583483683 9   0.005344311 -45
@@ -539,23 +474,69 @@ Signal Duration in msecs : 1259
 Average Signal level     : 0.0900
  
 ```
-#### Youtube video demos
 
-- Demo shows triggering of events: 
-  `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
-  on Windows 10, Brave (~Chrome) browser
+Example of an aborted recording:
+```
+silence 1606583476198 12  0.004649533 -47
+silence 1606583476280 13  0.003785960 -48
+silence 1606583476368 14  0.003742043 -49
+RECORDING START
+SIGNAL  1606583476459 1   0.094886370 -20 ██████████████████
+SIGNAL  1606583476547 2   0.144821317 -17 ████████████████████████████
+SIGNAL  1606583476630 3   0.101134127 -20 ████████████████████
+SIGNAL  1606583476712 4   0.067094446 -23 █████████████
+SIGNAL  1606583476794 5   0.046854554 -27 █████████
+SIGNAL  1606583476876 6   0.031084268 -30 ██████
+SIGNAL  1606583476958 7   0.021707304 -33 ████
+SIGNAL  1606583477040 8   0.013681016 -37 ██
+silence 1606583477128 1   0.009553963 -40
+silence 1606583477210 2   0.006021380 -44
+silence 1606583477293 3   0.004318002 -47
+silence 1606583477375 4   0.006236917 -44
+silence 1606583477456 5   0.004355472 -47
+silence 1606583477538 6   0.005018261 -46
+silence 1606583477620 7   0.004187944 -48
+RECORDING ABORT
+Error reason             : signal duration (611) < MIN_SIGNAL_DURATION (700)
+Total Duration in msecs  : 1161
+Signal Duration in msecs : 611
+Average Signal level     : 0.0652
+Average Signal dB        : -24
+```
 
-  https://youtu.be/P0JY_U8ZUKU
+#### Watch the youtube video demos
 
-- Demo shows triggering of `mutedmic` e `unmutedmic`, 
-  on Windows 10 PC, Brave (~Chrome) browser, using system settings
+1. Demo shows triggering of events: 
+   `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
+   on Windows 10, Brave (~Chrome) browser
 
-  https://youtu.be/ZUWuLqENtZ8
+   https://youtu.be/P0JY_U8ZUKU
+
+2. Demo shows triggering of `mutedmic` e `unmutedmic`, 
+   on Windows 10 PC, Brave (~Chrome) browser, using system settings
+
+   https://youtu.be/ZUWuLqENtZ8
+
+
+## To do
+1. On the Demo: add input boxes for significant parameters.
+
+2. On the Demo: add recording/download after the recordingstop event, 
+   allowing user to listen the record clip.
+
+3. Demo as a tuner of parameter settings. 
+   Above features would allow to transform the demo into a tool to tune/calibrate parameters
+
+4. add event for clipping
+
+5. Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
+
 
 
 ## Acknowledgments
 
-I used the volume-meter Web Audio API scriptprocessor written by Chris Wilson here: https://github.com/cwilso/volume-meter
+I used the volume-meter Web Audio API scriptprocessor 
+written by Chris Wilson here: https://github.com/cwilso/volume-meter
 
 
 ## License
