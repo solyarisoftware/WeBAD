@@ -45,7 +45,7 @@ Let's sketch possible scenarios:
   Namely: avoiding any wake-word detection algorithm.
 
 
-# Which are the possible scenarios?
+## Which are the possible scenarios?
 
 Let's focus on these two specific application contexts:
 
