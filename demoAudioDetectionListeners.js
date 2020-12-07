@@ -99,7 +99,12 @@ document.addEventListener('recordstart', event => {
     console.log('%cRECORDING START', 'color:greenyellow')
   }  
 
+  document.querySelector('#recording').style.background = 'yellow'
+  document.querySelector('#recording').style.color = 'black'
   document.querySelector('#recording').textContent = 'start'
+
+  startRecording()
+
 })
 
 //
@@ -122,7 +127,11 @@ document.addEventListener('recordstop', event => {
     console.log(' ')
   }  
 
-  document.querySelector('#recording').textContent = `stop. duration: ${duration} msecs`
+  document.querySelector('#recording').style.color = 'white'
+  document.querySelector('#recording').style.background = 'green'
+  document.querySelector('#recording').textContent = `stop. len: ${duration} msecs`
+
+  stopRecording()
 
 })
 
@@ -138,7 +147,7 @@ document.addEventListener('recordabort', event => {
     const duration = event.detail.duration
     const averageSignalLevel = averageSignal()
     
-    console.log('%cRECORDING ABORT', 'color:orangered')
+    console.log('%cRECORDING ABORT', 'color:red')
     console.log(`Abort reason             : ${abort}`)
     console.log(`Total Duration in msecs  : ${duration}`)
     console.log(`Signal Duration in msecs : ${duration - MAX_INTERSPEECH_SILENCE_MSECS }`)
@@ -147,7 +156,11 @@ document.addEventListener('recordabort', event => {
     console.log(' ')
   }  
 
-  document.querySelector('#recording').textContent = `abort. reason: ${abort}`
+  document.querySelector('#recording').style.color = 'white'
+  document.querySelector('#recording').style.background = 'red'
+  document.querySelector('#recording').textContent = `abort. ${abort}`
+
+  stopRecording()
 
 })
 
@@ -157,6 +170,7 @@ document.addEventListener('recordabort', event => {
 document.addEventListener('mutedmic', event => {
 
   document.querySelector('#microphonestatus').textContent = 'muted (off)'
+  document.querySelector('#microphonestatus').style.background = 'red'
 
   console.log('%cMICROPHONE MUTED', 'color:red')
   console.log(' ')
@@ -169,8 +183,9 @@ document.addEventListener('mutedmic', event => {
 document.addEventListener('unmutedmic', event => {
 
   document.querySelector('#microphonestatus').textContent = 'unmuted (on)'
+  document.querySelector('#microphonestatus').style.background = 'green'
 
-  console.log('%cMICROPHONE UNMUTED', 'color:yellow')
+  console.log('%cMICROPHONE UNMUTED', 'color:green')
   console.log(' ')
 
 })

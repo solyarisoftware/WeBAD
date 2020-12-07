@@ -1,19 +1,20 @@
 
-var mediaStreamSource = null;
+var mediaStreamSource = null
 
 
 function audioStream(stream) {
-    // Create an AudioNode from the stream.
-    mediaStreamSource = audioContext.createMediaStreamSource(stream);
+  // Create an AudioNode from the stream.
+  mediaStreamSource = audioContext.createMediaStreamSource(stream);
 
-    // Create a new volume meter and connect it.
-    meter = createAudioMeter(audioContext);
-    mediaStreamSource.connect(meter);
+  // Create a new volume meter and connect it.
+  meter = createAudioMeter(audioContext);
+  mediaStreamSource.connect(meter);
 
-    // kick off the visual updating
-    //drawLoop();
+  // kick off the visual updating
+  //drawLoop();
 
-    audioDetection()
+  audioDetection()
+
+  audioRecorder(stream)
 }
-
 
