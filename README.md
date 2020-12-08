@@ -557,18 +557,18 @@ Average Signal dB        : -24
   add recording/download after the recordingstop event, 
   allowing user to listen the record clip
 
-- [] On the Demo: 
+- [ ] On the Demo: 
   add input boxes for significant parameters, 
   allowing to modify parameters in real-time
 
-- [] Demo as a **parameter setting tuning tool** 
+- [ ] Demo as a **parameter setting tuning tool** 
    Above features would allow to transform the demo into a tool to tune/calibrate parameters
 
-- [] add event for clipping
+- [ ] add event for clipping
 
-- [] Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
+- [ ] Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
 
-- [] Continuous listening delayed-recording issue?
+- [ ] Continuous listening delayed-recording issue?
   - `recordingstart` event start speech recording as soon a signal (exceeding of a threshold) 
    is detected in the `audioDetection()` function loop, every e.g. 80 msecs.
    That's critical because the recording start "abruptly", 
