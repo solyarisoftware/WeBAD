@@ -1,13 +1,12 @@
 # WeBAD
 
-
 **WeBAD** stay for **We**b **B**rowser **A**udio **D**etection/Speech Recording Events API.
 
 Pronounce it *we-bad* or *web-ad*.
 
 ## How to detect speech, on the browser?
 
-Let's sketch possible scenarios:
+Let's see some possible scenarios:
 
 - Wake word detection
 
@@ -23,15 +22,16 @@ Let's sketch possible scenarios:
   The user push a button, start to talk, release the button when finished to talk.
   Note that push to talk could be implemented on the browser in two way:
 
-  - Software-button push-to-talk 
+  - Software-button push-to-talk (web page hotkey) 
 
     That's the simplest approach on GUI interface. Consider a web browser, 
     on a mobile device you have a touch interface, 
     on a personal computer  you have a keyboard/mouse.
-    So you can have an HTML button that, when pressed, triggers a recording. 
+    So you can have an HTML button (hotkey) that, when pressed, triggers a recording. 
     Through a keyboard or a touch screen, 
     the user press a key or touch a (button on the) screen to talk.
-    But you finally want a touch-less / keyboard-less solution!
+    See [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/).
+    But that is not a touch-less / keyboard-less solution.
 
   - **Hardware-button push-to-talk**
 
@@ -45,7 +45,7 @@ Let's sketch possible scenarios:
   Namely: avoiding any wake-word detection algorithm.
 
 
-## Which are the possible scenarios?
+## Which are the possible applications?
 
 Let's focus on these two specific application contexts:
 
@@ -63,54 +63,68 @@ Let's focus on these two specific application contexts:
   The voice interface is through an external micro equipped with a push-to talk button. 
 
 
-## The proposed solution
+## WeBAD Events API solution  
 
-The technical solution proposed is a javascript program running on the browser 
+The solution here proposed is a javascript program running on the browser 
 to get the audio volume of the microphone in real-time, 
 using a Web Audio API script processor that calculate RMS volume. 
 
 A cyclic task, running every N msecs, does some logic above the current volume RMS sample 
 and generates these javascript events:
 
-- AUDIO VOLUME
-  - `signal`, audio volume is high, so probably user is speaking
-  - `silence`, audio volume is pretty low, the mic is on but there is not speech
-  - `mute`, audio volume is almost zero, the mic is off
+### What ate the audio events we need?  
 
-- MICROPHONE STATUS
-  - `unmutedmic`, microphone is UNMUTED (passing from OFF to ON)
-  - `mutedmic`, microphone is MUTED (passing from ON to OFF)
+- AUDIO VOLUME EVENTS
+  | event | description | 
+  | ----- | ----------- |
+  | `mute` | audio volume is almost zero, the mic is off |
+  | `silence` | audio volume is pretty low, the mic is on but there is not speech |
+  | `signal` | audio volume is high, so probably user is speaking |
+  | `clipping` | audio volume is too high, clipping |
 
-- RECORDING
-  - `recordstart`, speech recording START
-  - `recordstop`, speech recording STOP (success, recording seems a valid speech)
-  - `recordabort`, speech recording ABORTED (because level is too low or audio duration length too short)
+- MICROPHONE STATUS EVENTS
+  | event | description | 
+  | ----- | ----------- |
+  | `unmutedmic`| microphone is UNMUTED (passing from OFF to ON)|
+  | `mutedmic`| microphone is MUTED (passing from ON to OFF)|
+
+- RECORDING EVENTS
+  | event | description | 
+  | ----- | ----------- |
+  | `recordstart`| speech recording START|
+  | `recordstop`| speech recording STOP (success, recording seems a valid speech)|
+  | `recordabort`| speech recording ABORTED (because level is too low or audio duration length too short)|
 
 
-WeBAD just triggers above listed events. What is out of scope of this project:
-- how to use events to record the audio recordings
-- how to use/process blob audio messages 
-  (probably you want to send them to a backend server via socketio or websockets).
+> WeBAD just triggers above listed events. What is out of scope of this project:
+> - how to use events to record the audio recordings
+> - how to use/process blob audio messages 
+>   (probably you want to send them to a backend server via socketio or websockets).
 
 
-### Internal or external microphone?
+### Recording audio/speech events 
 
 On the basis of the microphone / hardware configuration available,
 there are some different possible ways to proceed:
 
 - Using the PC/handset internal microphone
 
-  In this scenario, the goal is to get a speech generating `recordstart` and `recordstop` events.
+  In this scenario, the goal is to get a speech generating events:
+
+  - `recordstart` start speech recording 
+  - `recordstop` stop speech recording
 
 - Using an external microphone, bound to a push-to-talk hardware button
  
   In this scenario, the continuous mode could be substituted by a push-to-talk experience,
   where user has to push a real button every time he want to submit a speech, 
   releasing the button when he explicitly want to terminate recording.
-  To accomplish this case, the speech recording could start from the `unmutedmic` event
-  and it could stop when the `mutedmic` event is triggered. 
+  To accomplish this case we use two different events:
+
+  - `unmutedmic` start speech recording 
+  - `mutedmic` stop speech recording. 
  
-### Signal level states
+### Signal level/state events
 
 The microphone volume detected by the web Audio API script processor traces these states:
 
@@ -324,13 +338,13 @@ document.addEventListener('recordabort', event => {
 
 ## Installation and usage
 
-### Install
+### Install the repository
 
 ```bash
-$ git clone https://github.com/solyarisoftware/webad && cd webad
+$ git clone https://github.com/solyarisoftware/webad
 ```
 
-### Use the javascript library 
+### Use WeBAD library in your application
 
 - Just insert in your HTML these files:
 
@@ -345,33 +359,52 @@ $ git clone https://github.com/solyarisoftware/webad && cd webad
   </html>
   ```
 
-- Manage events generated by WeBAD.
+- Manage events generated by WeBAD in your web browser application.
+ 
+  > BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
 
 
 ### Run the demo 
 
 An usage example of WeBAD library is in `demo.html`. 
 
-BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
+On top of the WeBAD JS library, this repo supply a web page demo that how manage events generated by WeBAD.
+A very basic HTML show events changes and plays the recorded audio/speech.
 
-```bash
-$ firefox demo.html
-```
+- On localhost
 
-To run the demo as a page served by an HTTPS server:
-```
-$ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+  Run the demo on your localhost, by example using firefox browser:
 
-Starting up http-server, serving ./ through https
-Available on:
-  https://127.0.0.1:8443
-  https://192.168.1.134:8443
-Hit CTRL-C to stop the server
-```
+  ```bash
+  $ cd webad
+  $ firefox demo.html
+  ```
 
-On the browser, goto the page: `https://192.168.1.134:8443/demo.html`
+- Through an HTTPS server
+
+  WARNING: To run the demo (and any application using Web Audio API) you need to serve the web page with an HTTPS server.
+  To serve HTTPS static pages, I'm happy with [http-server package](https://github.com/http-party/http-server), 
+  using with this setup (of course you need a certificate, maybe selfsigned):
+
+  ```
+  $ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+
+  Starting up http-server, serving ./ through https
+  Available on:
+    https://127.0.0.1:8443
+    https://192.168.1.134:8443
+  Hit CTRL-C to stop the server
+  ```
+
+  On the browser, goto the page: `https://192.168.1.134:8443/demo.html`
 
 #### console log (excerpt)
+
+The demo optionally print console logs details.
+
+> WARNING: 
+> Be aware that console.logs are cpu-consuming (e.g. a print every 80 msecs). 
+> Use them just for debug. 
 
 Example of a successful recording:
 ```
@@ -504,7 +537,7 @@ Average Signal level     : 0.0652
 Average Signal dB        : -24
 ```
 
-#### Watch the youtube video demos
+#### Watch on youtube the screencast demos
 
 1. Demo shows triggering of events: 
    `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
@@ -519,24 +552,39 @@ Average Signal dB        : -24
 
 
 ## To do
-1. On the Demo: add input boxes for significant parameters.
 
-2. On the Demo: add recording/download after the recordingstop event, 
-   allowing user to listen the record clip.
+- [x] On the Demo: 
+  add recording/download after the recordingstop event, 
+  allowing user to listen the record clip
 
-3. Demo as a tuner of parameter settings. 
+- [] On the Demo: 
+  add input boxes for significant parameters, 
+  allowing to modify parameters in real-time
+
+- [] Demo as a **parameter setting tuning tool** 
    Above features would allow to transform the demo into a tool to tune/calibrate parameters
 
-4. add event for clipping
+- [] add event for clipping
 
-5. Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
+- [] Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
 
+- [] Continuous listening delayed-recording issue?
+  - `recordingstart` event start speech recording as soon a signal (exceeding of a threshold) 
+   is detected in the `audioDetection()` function loop, every e.g. 80 msecs.
+   That's critical because the recording start "abruptly", 
+   possibly truncating few milliseconds of the initial speech.
 
+   - Make sure that speech recognition engine (speech-to-text/ASR) is not affected. TBV.
+ 
+   - Otherwise a possible solution is, instead of recording from the `recordstart` event,
+     to foresee a continuous pre-recording: WeBAD could automatically 
+     start recording at each `signal` and stopping it at next `silence`.
+     Or continue recording until the usual `recordingstop` event.
 
 ## Acknowledgments
 
 I used the volume-meter Web Audio API scriptprocessor 
-written by Chris Wilson here: https://github.com/cwilso/volume-meter
+written by Chris Wilson here: https://github.com/cwilso/volume-meter 👏👏
 
 
 ## License
