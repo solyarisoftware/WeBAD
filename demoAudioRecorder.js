@@ -1,6 +1,8 @@
 /* eslint-env browser */
 var recorder = null
 
+let audioPlay = true
+
 // This example uses MediaRecorder to record from a live audio stream,
 // and uses the resulting blob as a source for an audio element.
 //
@@ -28,10 +30,15 @@ function audioRecorder(stream) {
 
 function onRecordingReady(e) {
 
-  var audio = document.getElementById('audio')
-  // e.data contains a blob representing the recording
-  audio.src = URL.createObjectURL(e.data)
-  audio.play()
+  // audio play just if recording is not aborted
+  if (audioPlay) {
+
+    const audio = document.getElementById('audio')
+    // e.data contains a blob representing the recording
+    audio.src = URL.createObjectURL(e.data)
+    audio.play()
+  
+  }  
 
 }
 
@@ -44,5 +51,13 @@ function startRecording() {
 function stopRecording() {
   // Stopping the recorder will eventually trigger the `dataavailable` event and we can complete the recording process
   recorder.stop()
+  audioPlay = true
+}
+
+
+function abortRecording() {
+  // Stopping the recorder will eventually trigger the `dataavailable` event and we can complete the recording process
+  recorder.stop()
+  audioPlay = false
 }
 

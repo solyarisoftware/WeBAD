@@ -568,7 +568,7 @@ Average Signal dB        : -24
 
 - [ ] Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
 
-- [ ] Continuous listening delayed-recording issue?
+- [ ] Continuous listening delayed-recording issue
   - `recordingstart` event start speech recording as soon a signal (exceeding of a threshold) 
    is detected in the `audioDetection()` function loop, every e.g. 80 msecs.
    That's critical because the recording start "abruptly", 

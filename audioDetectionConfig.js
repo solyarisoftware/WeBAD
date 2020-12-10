@@ -1,4 +1,4 @@
-/*
+/**
  * audioDetectionConfig.js
  * configuration parameters
  */
@@ -9,19 +9,19 @@ SAMPLE_POLLING_MSECS
 
 polling time clock in milliseconds. Is the sampling rate to run speech detection calculations.
 
-          |                   
-      |   |   |               
-      |   |   |   |         
-      |   |   |   |   |        
-  |   |   |   |   |   |   |    
-  |   |   |   |   |   |   |   |    
-  |   |   |   |   |   |   |   |   |    
-  |   |   |   |   |   |   |   |   |   |   | 
-  |   |   |   |   |   |   |   |   |   |   |   |
+          █                   
+      █   █   █               
+      █   █   █   █         
+      █   █   █   █   █        
+  █   █   █   █   █   █   █    
+  █   █   █   █   █   █   █   █    
+  █   █   █   █   █   █   █   █   █    
+  █   █   █   █   █   █   █   █   █   █   █ 
+  █   █   █   █   █   █   █   █   █   █   █   █
    <-> <-> <-> <-> <-> <-> <-> <-> <-> <-> <->                   
 
 */
-const SAMPLE_POLLING_MSECS = 80
+const SAMPLE_POLLING_MSECS = 50
 
 /*
  
@@ -32,15 +32,15 @@ This is to decide when to stop recording of a speech made by multiple audio chun
 
 That elapsed is used also to decide if a full speech is concluded, generating event 'stoprecording'.
 
-      |                               |
-    | | |       |             |     | |              |
-    | | | | |   |   |         |   | | |              |
-    | | | | | | | | |       | |   | | |              | |   |
-  | | | | | | | | | | |     | |   | | |              | | | |
-  | | | | | | | | | | |     | | | | | | |            | | | | | |
-  | | | | | | | | | | | |   | | | | | | | |          | | | | | | |
-  | | | | | | | | | | | |   | | | | | | | |          | | | | | | | |
-  | | | | | | | | | | | |   | | | | | | | |          | | | | | | | |
+      █                               █
+    █ █ █       █             █     █ █              █
+    █ █ █ █ █   █   █         █   █ █ █              █
+    █ █ █ █ █ █ █ █ █       █ █   █ █ █              █ █   █
+  █ █ █ █ █ █ █ █ █ █ █     █ █   █ █ █              █ █ █ █
+  █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █            █ █ █ █ █ █
+  █ █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █ █          █ █ █ █ █ █ █
+  █ █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █ █          █ █ █ █ █ █ █ █
+  █ █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █ █          █ █ █ █ █ █ █ █
                          <->               <-------->               <--------> 
   ^                                                                           ^
   |                                                                           |
@@ -49,6 +49,31 @@ That elapsed is used also to decide if a full speech is concluded, generating ev
 */                                                      
 const MAX_INTERSPEECH_SILENCE_MSECS = 600
 
+
+/*
+ 
+PRERECORDSTART_MSECS
+
+elapsed time in milliseconds before ste recordstart event.
+
+             █                               █
+           █ █ █       █             █     █ █              █
+           █ █ █ █ █   █   █         █   █ █ █              █
+           █ █ █ █ █ █ █ █ █       █ █   █ █ █              █ █   █
+         █ █ █ █ █ █ █ █ █ █ █     █ █   █ █ █              █ █ █ █
+         █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █            █ █ █ █ █ █
+         █ █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █ █          █ █ █ █ █ █ █
+         █ █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █ █          █ █ █ █ █ █ █ █
+         █ █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █ █          █ █ █ █ █ █ █ █
+<------->                       <->               <-------->               <--------> 
+^        ^                                                                           ^
+|        |                                                                           |
+|        recordstart                                                        recordstop  
+|              
+prerecordstart
+
+*/                                                      
+const PRERECORDSTART_MSECS = 500
 
 /*
  
@@ -62,15 +87,15 @@ It could be usefule to purge out background clicks/noises.
 If a signal block chain sample length is less than that value, 
 the event 'abortrecording' is generated.
 
-      |                                
-    | | |       |             |      
-    | | | | |   |   |         |          |
-    | | | | | | | | |       | |        | |
-  | | | | | | | | | | |     | |        | | 
-  | | | | | | | | | | |     | | |    | | |
-  | | | | | | | | | | | |   | | |    | | |
-  | | | | | | | | | | | |   | | |    | | |
-  | | | | | | | | | | | |   | | |    | | |
+      █                                
+    █ █ █       █             █      
+    █ █ █ █ █   █   █         █          █
+    █ █ █ █ █ █ █ █ █       █ █        █ █
+  █ █ █ █ █ █ █ █ █ █ █     █ █        █ █ 
+  █ █ █ █ █ █ █ █ █ █ █     █ █ █    █ █ █
+  █ █ █ █ █ █ █ █ █ █ █ █   █ █ █    █ █ █
+  █ █ █ █ █ █ █ █ █ █ █ █   █ █ █    █ █ █
+  █ █ █ █ █ █ █ █ █ █ █ █   █ █ █    █ █ █
                             <--->    <--->   
 */
 const MIN_SIGNAL_DURATION = 400
@@ -104,4 +129,13 @@ the event 'abortrecording' is generated.
 
 */
 const MIN_AVERAGE_SIGNAL_VOLUME = 0.04
+
+
+const DEFAULT_PARAMETERS_CONFIGURATION = {
+  timeoutMsecs: SAMPLE_POLLING_MSECS,
+  prerecordstartMsecs: PRERECORDSTART_MSECS,
+  speakingMinVolume: VOLUME_SIGNAL, 
+  silenceVolume: VOLUME_SILENCE,
+  muteVolume: VOLUME_MUTE 
+}
 

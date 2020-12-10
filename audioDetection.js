@@ -18,7 +18,8 @@ let silenceItems = 0
 let signalItems = 0
 let speechStarted = false
 
-let recordstartTime
+let recordstartTime 
+let prerecordingItems = 0
 
 let speechVolumesList = [] 
 
@@ -246,6 +247,47 @@ function sampleThresholdsDecision(muteVolume, speakingMinVolume) {
 
 
 /**
+ * prerecording
+ *
+ * Emits the event:
+ *
+ *  RECORDING:
+ *    'prerecordstart' -> speech prerecording START
+ *
+ * Every prerecordstartMsecs milliseconds, 
+ * in SYNC with the main sampling (every timeoutMsecs milliseconds)
+ *
+ * @param {Number} prerecordstartMsecs
+ * @param {Number} timeoutMsecs
+ *
+ */ 
+function prerecording( prerecordstartMsecs, timeoutMsecs ) {
+  
+  const timestamp = Date.now()
+
+  const eventData = { 
+    detail: { 
+      status: 'prerecordstart',
+      volume: meter.volume, 
+      timestamp,
+      //duration,
+      items: ++ prerecordingItems
+    } 
+  }
+
+  // emit event 'prerecordstart' every prerecordstartMsecs.
+  // considering that prerecordstartMsecs is a multimple of timeoutMsecs   
+  if ( (prerecordingItems * timeoutMsecs) >= prerecordstartMsecs) {
+    
+    dispatchEvent( 'prerecordstart', eventData )
+
+    prerecordingItems = 0
+  }  
+
+}  
+
+
+/**
  * audio speech detection
  *
  * emit these DOM custom events: 
@@ -271,15 +313,13 @@ function sampleThresholdsDecision(muteVolume, speakingMinVolume) {
  *
  */
 
-function audioDetection( config = {
-  timeoutMsecs: SAMPLE_POLLING_MSECS,
-  speakingMinVolume: VOLUME_SIGNAL, 
-  silenceVolume: VOLUME_SILENCE,
-  muteVolume: VOLUME_MUTE 
-  }) {
+function audioDetection(config=DEFAULT_PARAMETERS_CONFIGURATION) {
 
   setTimeout( 
     () => {
+
+      prerecording( config.prerecordstartMsecs, config.timeoutMsecs )
+
       sampleThresholdsDecision(config.muteVolume, config.speakingMinVolume)
 
       // recursively call this function

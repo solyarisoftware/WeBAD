@@ -118,7 +118,6 @@ document.addEventListener('recordstop', event => {
     
     const averageSignalLevel = averageSignal()
     
-    //console.log('%cRECORDING STOP', 'background: #222; color: #bada55')
     console.log('%cRECORDING STOP', 'color:lime')
     console.log(`Total Duration in msecs  : ${duration}`)
     console.log(`Signal Duration in msecs : ${duration - MAX_INTERSPEECH_SILENCE_MSECS }`)
@@ -160,8 +159,25 @@ document.addEventListener('recordabort', event => {
   document.querySelector('#recording').style.background = 'red'
   document.querySelector('#recording').textContent = `abort. ${abort}`
 
-  stopRecording()
+  abortRecording()
 
+})
+
+//
+// prerecordstart handler
+//
+document.addEventListener('prerecordstart', event => {
+
+  if (debuglog) {
+    
+    const volume = event.detail.volume.toFixed(9)
+    const timestamp = event.detail.timestamp
+    const dBV = dB(event.detail.volume)
+
+    console.log(`%cPRERECORDING START    ${timestamp} ${volume} ${dBV}`, 'color:yellow')
+
+  }  
+  
 })
 
 //
