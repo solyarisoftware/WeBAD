@@ -22,9 +22,10 @@
  */ 
 let volumeState = 'mute'
 
+let speechStarted = false
+
 let silenceItems = 0
 let signalItems = 0
-let speechStarted = false
 
 let speechstartTime 
 let prerecordingItems = 0
@@ -176,15 +177,15 @@ function silence(timestamp, duration) {
   //
   // after a MAX_INTERSPEECH_SILENCE_MSECS 
   // a virdict event is generated:
-  // speechabort, if audio chunck is to brief or at too low volume 
-  // speechstop, if audio chunk appears to be a valid speech
+  //   speechabort if audio chunck is to brief or at too low volume 
+  //   speechstop  if audio chunk appears to be a valid speech
   //
   if ( speechStarted && (silenceItems === maxSilenceItems) ) {
 
     const signalDuration = duration - MAX_INTERSPEECH_SILENCE_MSECS
     const averageSignalValue = averageSignal()
 
-    // record abort 
+    // speech abort 
     // signal duration too short
     if ( signalDuration < MIN_SIGNAL_DURATION ) {
 
@@ -192,7 +193,7 @@ function silence(timestamp, duration) {
       dispatchEvent( 'speechabort', eventData )
     }  
 
-    // record abort
+    // speech abort
     // signal level too low
     else if (averageSignalValue < MIN_AVERAGE_SIGNAL_VOLUME) {
 
@@ -200,7 +201,7 @@ function silence(timestamp, duration) {
       dispatchEvent( 'speechabort', eventData )
     }  
 
-    // record stop
+    // speech stop
     // audio chunk appears to be a valid speech
     else {
 
@@ -287,7 +288,9 @@ function prerecording( prespeechstartMsecs, timeoutMsecs ) {
   // considering that prespeechstartMsecs is a multimple of timeoutMsecs   
   if ( (prerecordingItems * timeoutMsecs) >= prespeechstartMsecs) {
     
-    dispatchEvent( 'prespeechstart', eventData )
+    // emit the event if speech is not started   
+    if ( !speechStarted )
+      dispatchEvent( 'prespeechstart', eventData )
 
     prerecordingItems = 0
   }  

@@ -93,6 +93,28 @@ document.addEventListener('mute', event => {
 
 })
 
+
+//
+// prespeechstart handler
+//
+document.addEventListener('prespeechstart', event => {
+
+  if (debuglog) {
+    
+    //const volume = event.detail.volume.toFixed(9)
+    const timestamp = event.detail.timestamp
+    //const dBV = dB(event.detail.volume)
+
+    //console.log(`%cPRE SPEECH START    ${timestamp} ${volume} ${dBV}`, 'color:yellow')
+    console.log(`%cPRE SPEECH START   ${timestamp}`, 'color:blue')
+
+  }  
+  
+  restartRecording()
+
+})
+
+
 //
 // speechstart handler
 //
@@ -101,8 +123,7 @@ document.addEventListener('speechstart', event => {
   if (debuglog) {
   
     //speechstartTime = event.detail.timestamp
-    //console.log('%cRECORDING START', 'background: #222; color: #bada55')
-    console.log('%cRECORDING START', 'color:greenyellow')
+    console.log('%cSPEECH START', 'color:greenyellow')
   }  
 
   document.querySelector('#recordingcell').style.background = 'green'
@@ -111,7 +132,7 @@ document.addEventListener('speechstart', event => {
   document.querySelector('#recording').style.color = 'white'
   document.querySelector('#recording').textContent = 'start'
 
-  startRecording()
+  //startRecording()
 
 })
 
@@ -126,7 +147,7 @@ document.addEventListener('speechstop', event => {
     
     const averageSignalLevel = averageSignal()
     
-    console.log('%cRECORDING STOP', 'color:lime')
+    console.log('%cSPEECH STOP', 'color:lime')
     console.log(`Total Duration in msecs  : ${duration}`)
     console.log(`Signal Duration in msecs : ${duration - MAX_INTERSPEECH_SILENCE_MSECS }`)
     console.log(`Average Signal level     : ${averageSignalLevel}`)
@@ -156,7 +177,7 @@ document.addEventListener('speechabort', event => {
     const duration = event.detail.duration
     const averageSignalLevel = averageSignal()
     
-    console.log('%cRECORDING ABORT', 'color:red')
+    console.log('%cSPEECH ABORT', 'color:red')
     console.log(`Abort reason             : ${abort}`)
     console.log(`Total Duration in msecs  : ${duration}`)
     console.log(`Signal Duration in msecs : ${duration - MAX_INTERSPEECH_SILENCE_MSECS }`)
@@ -173,24 +194,6 @@ document.addEventListener('speechabort', event => {
 
   abortRecording()
 
-})
-
-//
-// prespeechstart handler
-//
-document.addEventListener('prespeechstart', event => {
-
-  if (debuglog) {
-    
-    //const volume = event.detail.volume.toFixed(9)
-    const timestamp = event.detail.timestamp
-    //const dBV = dB(event.detail.volume)
-
-    //console.log(`%cPRERECORDING START    ${timestamp} ${volume} ${dBV}`, 'color:yellow')
-    console.log(`%cPRERECORDING START    ${timestamp}`, 'color:yellow')
-
-  }  
-  
 })
 
 //

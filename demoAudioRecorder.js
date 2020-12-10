@@ -47,6 +47,16 @@ function startRecording() {
   recorder.start()
 }
 
+/**
+ * restartRecording
+ *
+ * abort and start
+ */ 
+function restartRecording() {
+  recorder.stop()
+  audioPlay = false
+  recorder.start()
+}
 
 function stopRecording() {
   // Stopping the recorder will eventually trigger the `dataavailable` event and we can complete the recording process

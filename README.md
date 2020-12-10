@@ -80,7 +80,7 @@ and generates these javascript events:
   | `mute` | audio volume is almost zero, the mic is off |
   | `silence` | audio volume is pretty low, the mic is on but there is not speech |
   | `signal` | audio volume is high, so probably user is speaking |
-  | `clipping` | audio volume is too high, clipping |
+  | `clipping` | audio volume is too high, clipping (**TODO**) |
 
 - MICROPHONE STATUS EVENTS
   | event | description | 
