@@ -10,15 +10,23 @@
 
 
 /**
- * module variables
+ * volumeState
+ *
+ * volume range state of a single sample. Possible values:
+ *
+ *   'mute'
+ *   'silence'
+ *   'signal'
+ *   'clipping' TODO
+ *
  */ 
-let status
+let volumeState = 'mute'
 
 let silenceItems = 0
 let signalItems = 0
 let speechStarted = false
 
-let recordstartTime 
+let speechstartTime 
 let prerecordingItems = 0
 
 let speechVolumesList = [] 
@@ -56,7 +64,7 @@ function mute(timestamp, duration) {
 
   const eventData = { 
     detail: { 
-      status: 'mute',
+      event: 'mute',
       volume: meter.volume, 
       timestamp,
       duration
@@ -67,9 +75,9 @@ function mute(timestamp, duration) {
   
   // mic is muted (is closed)
   // trigger event on transition
-  if (status !== 'mute') {
+  if (volumeState !== 'mute') {
     dispatchEvent( 'mutedmic', eventData )
-    status = 'mute'
+    volumeState = 'mute'
   }  
 
 }  
@@ -87,7 +95,7 @@ function mute(timestamp, duration) {
  *    'unmutedmic'  -> microphone is UNMUTED (passing from OFF to ON)
  *
  *  RECORDING:
- *    'recordstart' -> speech recording START
+ *    'speechstart' -> speech recording START
  *
  */ 
 function signal(timestamp, duration) {
@@ -96,7 +104,7 @@ function signal(timestamp, duration) {
   
   const eventData = { 
     detail: { 
-      status: 'signal',
+      event: 'signal',
       volume: meter.volume, 
       timestamp,
       duration,
@@ -106,9 +114,9 @@ function signal(timestamp, duration) {
  
   if (! speechStarted) {
 
-    dispatchEvent( 'recordstart', eventData )
+    dispatchEvent( 'speechstart', eventData )
 
-    recordstartTime = timestamp
+    speechstartTime = timestamp
     speechStarted = true
     speechVolumesList = []
   }  
@@ -119,9 +127,9 @@ function signal(timestamp, duration) {
 
   // mic is unmuted (is open)
   // trigger event on transition
-  if (status === 'mute') {
+  if (volumeState === 'mute') {
     dispatchEvent( 'unmutedmic', eventData )
-    status = 'signal'
+    volumeState = 'signal'
   }  
 
 }  
@@ -138,8 +146,8 @@ function signal(timestamp, duration) {
  *    'unmutedmic'  -> microphone is UNMUTED (passing from OFF to ON)
  *
  *  RECORDING:
- *    'recordstop'  -> speech recording STOP (success, recording seems a valid speech)
- *    'recordabort' -> speech recording ABORTED (because level is too low or audio duration length too short)
+ *    'speechstop'  -> speech recording STOP (success, recording seems a valid speech)
+ *    'speechabort' -> speech recording ABORTED (because level is too low or audio duration length too short)
  *
  */ 
 function silence(timestamp, duration) {
@@ -148,7 +156,7 @@ function silence(timestamp, duration) {
 
   const eventData = { 
     detail: { 
-      status: 'silence',
+      event: 'silence',
       volume: meter.volume, 
       timestamp,
       duration,
@@ -160,16 +168,16 @@ function silence(timestamp, duration) {
 
   // mic is unmuted (goes ON)
   // trigger event on transition
-  if (status === 'mute') {
+  if (volumeState === 'mute') {
     dispatchEvent( 'unmutedmic', eventData )
-    status = 'silence'
+    volumeState = 'silence'
   }  
 
   //
   // after a MAX_INTERSPEECH_SILENCE_MSECS 
   // a virdict event is generated:
-  // recordabort, if audio chunck is to brief or at too low volume 
-  // recordstop, if audio chunk appears to be a valid speech
+  // speechabort, if audio chunck is to brief or at too low volume 
+  // speechstop, if audio chunk appears to be a valid speech
   //
   if ( speechStarted && (silenceItems === maxSilenceItems) ) {
 
@@ -181,7 +189,7 @@ function silence(timestamp, duration) {
     if ( signalDuration < MIN_SIGNAL_DURATION ) {
 
       eventData.detail.abort = `signal duration (${signalDuration}) < MIN_SIGNAL_DURATION (${MIN_SIGNAL_DURATION})`
-      dispatchEvent( 'recordabort', eventData )
+      dispatchEvent( 'speechabort', eventData )
     }  
 
     // record abort
@@ -189,14 +197,14 @@ function silence(timestamp, duration) {
     else if (averageSignalValue < MIN_AVERAGE_SIGNAL_VOLUME) {
 
       eventData.detail.abort = `signal average volume (${averageSignalValue}) < MIN_AVERAGE_SIGNAL_VOLUME (${MIN_AVERAGE_SIGNAL_VOLUME})`
-      dispatchEvent( 'recordabort', eventData )
+      dispatchEvent( 'speechabort', eventData )
     }  
 
     // record stop
     // audio chunk appears to be a valid speech
     else {
 
-      dispatchEvent( 'recordstop', eventData )
+      dispatchEvent( 'speechstop', eventData )
     }  
 
     speechStarted = false
@@ -217,7 +225,7 @@ function silence(timestamp, duration) {
 function sampleThresholdsDecision(muteVolume, speakingMinVolume) {
 
   const timestamp = Date.now()
-  const duration = timestamp - recordstartTime
+  const duration = timestamp - speechstartTime
 
   //
   // MUTE
@@ -252,22 +260,22 @@ function sampleThresholdsDecision(muteVolume, speakingMinVolume) {
  * Emits the event:
  *
  *  RECORDING:
- *    'prerecordstart' -> speech prerecording START
+ *    'prespeechstart' -> speech prerecording START
  *
- * Every prerecordstartMsecs milliseconds, 
+ * Every prespeechstartMsecs milliseconds, 
  * in SYNC with the main sampling (every timeoutMsecs milliseconds)
  *
- * @param {Number} prerecordstartMsecs
+ * @param {Number} prespeechstartMsecs
  * @param {Number} timeoutMsecs
  *
  */ 
-function prerecording( prerecordstartMsecs, timeoutMsecs ) {
+function prerecording( prespeechstartMsecs, timeoutMsecs ) {
   
   const timestamp = Date.now()
 
   const eventData = { 
     detail: { 
-      status: 'prerecordstart',
+      //event: 'prespeechstart',
       volume: meter.volume, 
       timestamp,
       //duration,
@@ -275,11 +283,11 @@ function prerecording( prerecordstartMsecs, timeoutMsecs ) {
     } 
   }
 
-  // emit event 'prerecordstart' every prerecordstartMsecs.
-  // considering that prerecordstartMsecs is a multimple of timeoutMsecs   
-  if ( (prerecordingItems * timeoutMsecs) >= prerecordstartMsecs) {
+  // emit event 'prespeechstart' every prespeechstartMsecs.
+  // considering that prespeechstartMsecs is a multimple of timeoutMsecs   
+  if ( (prerecordingItems * timeoutMsecs) >= prespeechstartMsecs) {
     
-    dispatchEvent( 'prerecordstart', eventData )
+    dispatchEvent( 'prespeechstart', eventData )
 
     prerecordingItems = 0
   }  
@@ -302,9 +310,9 @@ function prerecording( prerecordstartMsecs, timeoutMsecs ) {
  *    'mutedmic' -> microphone is MUTED (passing from ON to OFF)
  *
  *  RECORDING:
- *    'recordstart' -> speech recording START
- *    'recordstop'  -> speech recording STOP (success, recording seems a valid speech)
- *    'recordabort' -> speech recording ABORTED (because level is too low or audio duration length too short)
+ *    'speechstart' -> speech recording START
+ *    'speechstop'  -> speech recording STOP (success, recording seems a valid speech)
+ *    'speechabort' -> speech recording ABORTED (because level is too low or audio duration length too short)
  *
  *
  * @param {Object} config 
@@ -318,7 +326,7 @@ function audioDetection(config=DEFAULT_PARAMETERS_CONFIGURATION) {
   setTimeout( 
     () => {
 
-      prerecording( config.prerecordstartMsecs, config.timeoutMsecs )
+      prerecording( config.prespeechstartMsecs, config.timeoutMsecs )
 
       sampleThresholdsDecision(config.muteVolume, config.speakingMinVolume)
 

@@ -91,9 +91,9 @@ and generates these javascript events:
 - RECORDING EVENTS
   | event | description | 
   | ----- | ----------- |
-  | `recordstart`| speech recording START|
-  | `recordstop`| speech recording STOP (success, recording seems a valid speech)|
-  | `recordabort`| speech recording ABORTED (because level is too low or audio duration length too short)|
+  | `speechstart`| speech recording START|
+  | `speechstop`| speech recording STOP (success, recording seems a valid speech)|
+  | `speechabort`| speech recording ABORTED (because level is too low or audio duration length too short)|
 
 
 > WeBAD just triggers above listed events. What is out of scope of this project:
@@ -111,8 +111,8 @@ there are some different possible ways to proceed:
 
   In this scenario, the goal is to get a speech generating events:
 
-  - `recordstart` start speech recording 
-  - `recordstop` stop speech recording
+  - `speechstart` start speech recording 
+  - `speechstop` stop speech recording
 
 - Using an external microphone, bound to a push-to-talk hardware button
  
@@ -214,9 +214,9 @@ signal -> pause -> signal -> pause -> ... -> signal -> silence
 
 In this scenario:
 
-- `recordstart` event is generated when a first speech chunk start 
-- `recordstop` event is generated when a successive speech is followed by a pause long `PAUSE_LAG` msecs
-- `recordabort` event is generated when an initial speech chunk has too low volume or is too short.
+- `speechstart` event is generated when a first speech chunk start 
+- `speechstop` event is generated when a successive speech is followed by a pause long `PAUSE_LAG` msecs
+- `speechabort` event is generated when an initial speech chunk has too low volume or is too short.
 
 ```
              █ chunk 1
@@ -228,21 +228,21 @@ In this scenario:
      █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
      ^                    ^                 ^                     ^        ^    
      |                    |                 |                     |        |  
-     recordstart          silence           silence               silence  recordstop
+     speechstart          silence           silence               silence  speechstop
      <------------------------------ recording ---------------------------->
 ```
 
 ```javascript
-document.addEventListener('recordstart', event => { 
+document.addEventListener('speechstart', event => { 
   // start audio recording 
 })
 
-document.addEventListener('recordstop', event => {
+document.addEventListener('speechstop', event => {
   // stop recording 
   // process the speech
 })
 
-document.addEventListener('recordabort', event => {
+document.addEventListener('speechabort', event => {
   // audio recording is not a valid speech
 })
 ```
@@ -272,14 +272,14 @@ document.addEventListener('recordabort', event => {
   █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █ █ █ █ background noise   |   
   ^     ^----------------------^    ^------------^    ^-----------------^       ^ ^         v 
   |     |                      |    |            |    |                 |       | |
-  |     SIGNAL                 |    SIGNAL       |    SIGNAL            |       | |
+  |     signal                 |    signal       |    signal            |       | |
   |     |                      |                 |                      |       | |
   |     |                      silence           silence                silence | |
   |     |                                                               lag     | |
   unmutemic                                                                     | mutemic
         ^                                                                       ^
         |                                                                       |
-        recordstart                                                             recordstop
+        speechstart                                                             speechstop
 ```
 
 
@@ -308,9 +308,9 @@ document.addEventListener('recordabort', event => {
 |  +------+--+--+------------+--+-------------+--+--+------+  |
 |         |  |  |            |  |             |  |  |         |
 |         v  v  v            v  v             v  v  v         |
-|         signal             unmutedmic       recordstart     |
-|         silence            mutedmic         recordstop      |
-|         mute                                recordabort     |
+|         signal             unmutedmic       speechstart     |
+|         silence            mutedmic         speechstop      |
+|         mute                                speechabort     |
 |         |  |  |            |  |             |  |  |         |
 |      +--v--v--v------------v--v-------------v--v--v--+      |
 |      |            Web  Media Recording API           |      |
@@ -412,50 +412,50 @@ silence 1606583471392 10  0.003169284 -50
 silence 1606583471476 11  0.003678703 -49
 silence 1606583471558 12  0.004238884 -47
 RECORDING START
-SIGNAL  1606583471640 1   0.011130118 -39 ██
-SIGNAL  1606583471726 2   0.093003371 -21 ██████████████████
-SIGNAL  1606583471807 3   0.135126087 -17 ███████████████████████████
-SIGNAL  1606583471888 4   0.147303816 -17 █████████████████████████████
-SIGNAL  1606583471971 5   0.110780564 -19 ██████████████████████
-SIGNAL  1606583472053 6   0.077362200 -22 ███████████████
-SIGNAL  1606583472135 7   0.051323664 -26 ██████████
-SIGNAL  1606583472216 8   0.035841229 -29 ███████
-SIGNAL  1606583472298 9   0.023777803 -32 ████
-SIGNAL  1606583472387 10  0.046829950 -27 █████████
-SIGNAL  1606583472470 11  0.137570663 -17 ███████████████████████████
-SIGNAL  1606583472552 12  0.160574726 -16 ████████████████████████████████
-SIGNAL  1606583472634 13  0.106528554 -19 █████████████████████
-SIGNAL  1606583472716 14  0.074392862 -23 ██████████████
-SIGNAL  1606583472798 15  0.114328135 -19 ██████████████████████
-SIGNAL  1606583472881 16  0.079839601 -22 ███████████████
-SIGNAL  1606583472965 17  0.067010825 -23 █████████████
-SIGNAL  1606583473047 18  0.073485472 -23 ██████████████
-SIGNAL  1606583473135 19  0.051709419 -26 ██████████
-SIGNAL  1606583473217 20  0.092753694 -21 ██████████████████
-SIGNAL  1606583473300 21  0.092452036 -21 ██████████████████
-SIGNAL  1606583473382 22  0.114292916 -19 ██████████████████████
-SIGNAL  1606583473464 23  0.147740638 -17 █████████████████████████████
-SIGNAL  1606583473545 24  0.151739035 -16 ██████████████████████████████
-SIGNAL  1606583473627 25  0.119704092 -18 ███████████████████████
-SIGNAL  1606583473710 26  0.079414140 -22 ███████████████
-SIGNAL  1606583473793 27  0.052684963 -26 ██████████
-SIGNAL  1606583473875 28  0.036791875 -29 ███████
-SIGNAL  1606583473957 29  0.085473214 -21 █████████████████
-SIGNAL  1606583474041 30  0.069822456 -23 █████████████
-SIGNAL  1606583474122 31  0.108942277 -19 █████████████████████
-SIGNAL  1606583474205 32  0.082516853 -22 ████████████████
-SIGNAL  1606583474287 33  0.105864857 -20 █████████████████████
-SIGNAL  1606583474370 34  0.070232909 -23 ██████████████
-SIGNAL  1606583474452 35  0.088423122 -21 █████████████████
-SIGNAL  1606583474534 36  0.079493683 -22 ███████████████
-SIGNAL  1606583474616 37  0.093004632 -21 ██████████████████
-SIGNAL  1606583474697 38  0.113127166 -19 ██████████████████████
-SIGNAL  1606583474780 39  0.079659070 -22 ███████████████
-SIGNAL  1606583474863 40  0.052847455 -26 ██████████
-SIGNAL  1606583474945 41  0.036905349 -29 ███████
-SIGNAL  1606583475029 42  0.024483762 -32 ████
-SIGNAL  1606583475111 43  0.016243028 -36 ███
-SIGNAL  1606583475194 44  0.010775957 -39 ██
+signal  1606583471640 1   0.011130118 -39 ██
+signal  1606583471726 2   0.093003371 -21 ██████████████████
+signal  1606583471807 3   0.135126087 -17 ███████████████████████████
+signal  1606583471888 4   0.147303816 -17 █████████████████████████████
+signal  1606583471971 5   0.110780564 -19 ██████████████████████
+signal  1606583472053 6   0.077362200 -22 ███████████████
+signal  1606583472135 7   0.051323664 -26 ██████████
+signal  1606583472216 8   0.035841229 -29 ███████
+signal  1606583472298 9   0.023777803 -32 ████
+signal  1606583472387 10  0.046829950 -27 █████████
+signal  1606583472470 11  0.137570663 -17 ███████████████████████████
+signal  1606583472552 12  0.160574726 -16 ████████████████████████████████
+signal  1606583472634 13  0.106528554 -19 █████████████████████
+signal  1606583472716 14  0.074392862 -23 ██████████████
+signal  1606583472798 15  0.114328135 -19 ██████████████████████
+signal  1606583472881 16  0.079839601 -22 ███████████████
+signal  1606583472965 17  0.067010825 -23 █████████████
+signal  1606583473047 18  0.073485472 -23 ██████████████
+signal  1606583473135 19  0.051709419 -26 ██████████
+signal  1606583473217 20  0.092753694 -21 ██████████████████
+signal  1606583473300 21  0.092452036 -21 ██████████████████
+signal  1606583473382 22  0.114292916 -19 ██████████████████████
+signal  1606583473464 23  0.147740638 -17 █████████████████████████████
+signal  1606583473545 24  0.151739035 -16 ██████████████████████████████
+signal  1606583473627 25  0.119704092 -18 ███████████████████████
+signal  1606583473710 26  0.079414140 -22 ███████████████
+signal  1606583473793 27  0.052684963 -26 ██████████
+signal  1606583473875 28  0.036791875 -29 ███████
+signal  1606583473957 29  0.085473214 -21 █████████████████
+signal  1606583474041 30  0.069822456 -23 █████████████
+signal  1606583474122 31  0.108942277 -19 █████████████████████
+signal  1606583474205 32  0.082516853 -22 ████████████████
+signal  1606583474287 33  0.105864857 -20 █████████████████████
+signal  1606583474370 34  0.070232909 -23 ██████████████
+signal  1606583474452 35  0.088423122 -21 █████████████████
+signal  1606583474534 36  0.079493683 -22 ███████████████
+signal  1606583474616 37  0.093004632 -21 ██████████████████
+signal  1606583474697 38  0.113127166 -19 ██████████████████████
+signal  1606583474780 39  0.079659070 -22 ███████████████
+signal  1606583474863 40  0.052847455 -26 ██████████
+signal  1606583474945 41  0.036905349 -29 ███████
+signal  1606583475029 42  0.024483762 -32 ████
+signal  1606583475111 43  0.016243028 -36 ███
+signal  1606583475194 44  0.010775957 -39 ██
 silence 1606583475275 1   0.007525253 -42
 silence 1606583475356 2   0.004992406 -46
 silence 1606583475438 3   0.005017556 -46
@@ -478,22 +478,22 @@ silence 1606583483683 9   0.005344311 -45
 silence 1606583483765 10  0.005013475 -46
 silence 1606583484746 22  0.005962545 -44
 RECORDING START
-SIGNAL  1606583484828 1   0.010574964 -40 ██
+signal  1606583484828 1   0.010574964 -40 ██
 silence 1606583484911 1   0.008990976 -41
 silence 1606583484993 2   0.008978051 -41
 silence 1606583485075 3   0.006903398 -43
 silence 1606583485157 4   0.006374691 -44
-SIGNAL  1606583485239 1   0.062778418 -24 ████████████
-SIGNAL  1606583485321 2   0.146286860 -17 █████████████████████████████
-SIGNAL  1606583485404 3   0.244475090 -12 ████████████████████████████████████████████████
-SIGNAL  1606583485485 4   0.213673155 -13 ██████████████████████████████████████████
-SIGNAL  1606583485568 5   0.141755137 -17 ████████████████████████████
-SIGNAL  1606583485650 6   0.094043254 -21 ██████████████████
-SIGNAL  1606583485732 7   0.062390216 -24 ████████████
-SIGNAL  1606583485814 8   0.043569415 -27 ████████
-SIGNAL  1606583485896 9   0.028904840 -31 █████
-SIGNAL  1606583485977 10  0.019176061 -34 ███
-SIGNAL  1606583486060 11  0.012721791 -38 ██
+signal  1606583485239 1   0.062778418 -24 ████████████
+signal  1606583485321 2   0.146286860 -17 █████████████████████████████
+signal  1606583485404 3   0.244475090 -12 ████████████████████████████████████████████████
+signal  1606583485485 4   0.213673155 -13 ██████████████████████████████████████████
+signal  1606583485568 5   0.141755137 -17 ████████████████████████████
+signal  1606583485650 6   0.094043254 -21 ██████████████████
+signal  1606583485732 7   0.062390216 -24 ████████████
+signal  1606583485814 8   0.043569415 -27 ████████
+signal  1606583485896 9   0.028904840 -31 █████
+signal  1606583485977 10  0.019176061 -34 ███
+signal  1606583486060 11  0.012721791 -38 ██
 silence 1606583486142 1   0.008884101 -41
 silence 1606583486227 2   0.005893894 -45
 silence 1606583486309 3   0.005564636 -45
@@ -514,14 +514,14 @@ silence 1606583476198 12  0.004649533 -47
 silence 1606583476280 13  0.003785960 -48
 silence 1606583476368 14  0.003742043 -49
 RECORDING START
-SIGNAL  1606583476459 1   0.094886370 -20 ██████████████████
-SIGNAL  1606583476547 2   0.144821317 -17 ████████████████████████████
-SIGNAL  1606583476630 3   0.101134127 -20 ████████████████████
-SIGNAL  1606583476712 4   0.067094446 -23 █████████████
-SIGNAL  1606583476794 5   0.046854554 -27 █████████
-SIGNAL  1606583476876 6   0.031084268 -30 ██████
-SIGNAL  1606583476958 7   0.021707304 -33 ████
-SIGNAL  1606583477040 8   0.013681016 -37 ██
+signal  1606583476459 1   0.094886370 -20 ██████████████████
+signal  1606583476547 2   0.144821317 -17 ████████████████████████████
+signal  1606583476630 3   0.101134127 -20 ████████████████████
+signal  1606583476712 4   0.067094446 -23 █████████████
+signal  1606583476794 5   0.046854554 -27 █████████
+signal  1606583476876 6   0.031084268 -30 ██████
+signal  1606583476958 7   0.021707304 -33 ████
+signal  1606583477040 8   0.013681016 -37 ██
 silence 1606583477128 1   0.009553963 -40
 silence 1606583477210 2   0.006021380 -44
 silence 1606583477293 3   0.004318002 -47
@@ -530,7 +530,7 @@ silence 1606583477456 5   0.004355472 -47
 silence 1606583477538 6   0.005018261 -46
 silence 1606583477620 7   0.004187944 -48
 RECORDING ABORT
-Error reason             : signal duration (611) < MIN_SIGNAL_DURATION (700)
+Error reason             : signal duration (611) < MIN_signal_DURATION (700)
 Total Duration in msecs  : 1161
 Signal Duration in msecs : 611
 Average Signal level     : 0.0652
@@ -576,7 +576,7 @@ Average Signal dB        : -24
 
    - Make sure that speech recognition engine (speech-to-text/ASR) is not affected. TBV.
  
-   - Otherwise a possible solution is, instead of recording from the `recordstart` event,
+   - Otherwise a possible solution is, instead of recording from the `speechstart` event,
      to foresee a continuous pre-recording: WeBAD could automatically 
      start recording at each `signal` and stopping it at next `silence`.
      Or continue recording until the usual `recordingstop` event.

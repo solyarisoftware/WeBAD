@@ -3,6 +3,7 @@
 
 	<head>
 		<title>WeBAD Demo</title>
+    <link rel="shortcut icon" href="#">
 		<style>
       body {
         font-size: 18px;
@@ -75,15 +76,15 @@
         </tr>
         <tr>
           <td>microphone</td>
-          <td><a id="microphonestatus"></a></td>
+          <td id="microphonestatuscell"><a id="microphonestatus"></a></td>
         </tr>
         <tr>
           <td>audio</td>
-          <td><a id="audiostatus"></a></td>
+          <td id="audiostatuscell"><a id="audiostatus"></a></td>
         </tr>
         <tr>
-          <td>recording</td>
-          <td><a id="recording"></a><p><audio id="audio" controls></audio></p></td>
+          <td>speech<br>recording</td>
+          <td id="recordingcell"><a id="recording"></a><p><audio id="audio" controls></audio></p></td>
         </tr>
     </table>
     </div>
@@ -164,17 +165,17 @@
           <td>micro is MUTED (passing from ON to OFF)</td>
         </tr>
         <tr>
-          <td>recordstart</td>
+          <td>speechstart</td>
           <td>recording</td>
           <td>speech recording start</td>
         </tr>
         <tr>
-          <td>recordstop</td>
+          <td>speechstop</td>
           <td>recording</td>
           <td>speech recording stop</td>
         </tr>
         <tr>
-          <td>recordabort</td>
+          <td>speechabort</td>
           <td>recording</td>
           <td>speech recording aborted</td>
         </tr>

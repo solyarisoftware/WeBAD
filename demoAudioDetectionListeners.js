@@ -44,9 +44,12 @@ document.addEventListener('signal', event => {
   const line = hystogramLine(volume)
 
   if (debuglog)
-    console.log(`SIGNAL  ${timestamp} ${items} ${volume} ${dBV} ${line}`)
+    console.log(`signal  ${timestamp} ${items} ${volume} ${dBV} ${line}`)
 
-  document.querySelector('#audiostatus').textContent = 'SIGNAL'
+  document.querySelector('#audiostatuscell').style.background = 'green'
+  document.querySelector('#audiostatuscell').style.color = 'black'
+  document.querySelector('#audiostatus').style.background = 'green'
+  document.querySelector('#audiostatus').textContent = 'signal'
 
   //const theDiv = document.getElementById('log')
   //const content = document.createTextNode(text)
@@ -67,6 +70,9 @@ document.addEventListener('silence', event => {
   if (debuglog)
     console.log(`silence ${timestamp} ${items} ${volume} ${dBV}`)
 
+  document.querySelector('#audiostatuscell').style.background = 'black'
+  document.querySelector('#audiostatuscell').style.color = 'white'
+  document.querySelector('#audiostatus').style.background = 'black'
   document.querySelector('#audiostatus').textContent = 'silence'
 
 })
@@ -88,19 +94,21 @@ document.addEventListener('mute', event => {
 })
 
 //
-// recordstart handler
+// speechstart handler
 //
-document.addEventListener('recordstart', event => {
+document.addEventListener('speechstart', event => {
 
   if (debuglog) {
   
-    //recordstartTime = event.detail.timestamp
+    //speechstartTime = event.detail.timestamp
     //console.log('%cRECORDING START', 'background: #222; color: #bada55')
     console.log('%cRECORDING START', 'color:greenyellow')
   }  
 
-  document.querySelector('#recording').style.background = 'yellow'
-  document.querySelector('#recording').style.color = 'black'
+  document.querySelector('#recordingcell').style.background = 'green'
+  document.querySelector('#recordingcell').style.color = 'white'
+  document.querySelector('#recording').style.background = 'green'
+  document.querySelector('#recording').style.color = 'white'
   document.querySelector('#recording').textContent = 'start'
 
   startRecording()
@@ -108,9 +116,9 @@ document.addEventListener('recordstart', event => {
 })
 
 //
-// recordstop handler
+// speechstop handler
 //
-document.addEventListener('recordstop', event => {
+document.addEventListener('speechstop', event => {
 
   const duration = event.detail.duration
 
@@ -126,8 +134,10 @@ document.addEventListener('recordstop', event => {
     console.log(' ')
   }  
 
+  document.querySelector('#recordingcell').style.color = 'white'
+  document.querySelector('#recordingcell').style.background = 'black'
   document.querySelector('#recording').style.color = 'white'
-  document.querySelector('#recording').style.background = 'green'
+  document.querySelector('#recording').style.background = 'black'
   document.querySelector('#recording').textContent = `stop. len: ${duration} msecs`
 
   stopRecording()
@@ -135,9 +145,9 @@ document.addEventListener('recordstop', event => {
 })
 
 //
-// recordabort handler
+// speechabort handler
 //
-document.addEventListener('recordabort', event => {
+document.addEventListener('speechabort', event => {
 
   const abort = event.detail.abort
 
@@ -155,6 +165,8 @@ document.addEventListener('recordabort', event => {
     console.log(' ')
   }  
 
+  document.querySelector('#recordingcell').style.color = 'white'
+  document.querySelector('#recordingcell').style.background = 'red'
   document.querySelector('#recording').style.color = 'white'
   document.querySelector('#recording').style.background = 'red'
   document.querySelector('#recording').textContent = `abort. ${abort}`
@@ -164,17 +176,18 @@ document.addEventListener('recordabort', event => {
 })
 
 //
-// prerecordstart handler
+// prespeechstart handler
 //
-document.addEventListener('prerecordstart', event => {
+document.addEventListener('prespeechstart', event => {
 
   if (debuglog) {
     
-    const volume = event.detail.volume.toFixed(9)
+    //const volume = event.detail.volume.toFixed(9)
     const timestamp = event.detail.timestamp
-    const dBV = dB(event.detail.volume)
+    //const dBV = dB(event.detail.volume)
 
-    console.log(`%cPRERECORDING START    ${timestamp} ${volume} ${dBV}`, 'color:yellow')
+    //console.log(`%cPRERECORDING START    ${timestamp} ${volume} ${dBV}`, 'color:yellow')
+    console.log(`%cPRERECORDING START    ${timestamp}`, 'color:yellow')
 
   }  
   
@@ -187,6 +200,7 @@ document.addEventListener('mutedmic', event => {
 
   document.querySelector('#microphonestatus').textContent = 'muted (off)'
   document.querySelector('#microphonestatus').style.background = 'red'
+  document.querySelector('#microphonestatuscell').style.background = 'red'
 
   console.log('%cMICROPHONE MUTED', 'color:red')
   console.log(' ')
@@ -200,6 +214,7 @@ document.addEventListener('unmutedmic', event => {
 
   document.querySelector('#microphonestatus').textContent = 'unmuted (on)'
   document.querySelector('#microphonestatus').style.background = 'green'
+  document.querySelector('#microphonestatuscell').style.background = 'green'
 
   console.log('%cMICROPHONE UNMUTED', 'color:green')
   console.log(' ')
