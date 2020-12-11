@@ -8,32 +8,40 @@ Pronounce it *we-bad* or *web-ad*.
 
 You want to use the browser as a voice interface "frontend". Specifically you want to detect the user speech messages.
 
-This software component supply a solution for two scenarios:
+WeBAD supply a solution for two specific scenarios:
 
-- **Hardware-button push-to-talk**
+1. **Hardware-button push-to-talk**
  
-  The user press a real/hardware button, that mute/un-mute an external mic.
+   The user press a real/hardware button, that mute/un-mute an external mic.
+   You want to record the audio blob from when the user push the button, 
+   to when the user release the button! 
 
-- **Continuous listening**
+2. **Continuous listening**
 
-  The audio is detected in real-time, 
-  just talking in front of the PC (or the tablet/ mobile phone / handset).
-  Namely: avoiding any wake-word detection algorithm.
+   The speech is detected in real-time, 
+   just talking in front of the PC (or the tablet/ mobile phone / handset).
+   Namely: avoiding any wake-word detection algorithm.
+   You want to record the audio blob from when the user start to talk, 
+   to when the user finish the spoken utterance! 
 
 
 ## What's a speech message?
 
 Consider user talking with the computer. I define "speech" an audio message 
-(a binary Blob in some CODEC format) to be elaborated by some backend voicebot logic. 
+(a binary Blob in some codec format) to be elaborated by some backend voicebot logic. 
 
-In terms of linguistics syntax, for speech I mean 
-the pronunciation of a letter, a number, a monosyllable (the minimal pronounceable item), a word, an entire sentence. Examples:
-- *1*, *3*, *I*, *c*
-- *Alexa*, *in*, *love*, *CRSU123456K*, *ILM-67Z-5643*
-- *Ehi Google*, *I'm in love with you*
+> With *audio elaboration* I means a text transcript with an ASR engine 
+> (followed by a dialog manager, see my own [NaifJs](https://github.com/solyarisoftware/naifjs). 
+> That's out of scope of current project.
+> We here need just to collect  the audio input, from ta web browser client, to be submitted to a backend engine.
+> Se also the [Architecture](#architecture) paragraph.
 
-From a trivial time-domain audio point of view, 
-the pronunciation of an entire sentence could be considered as 
+In terms of syntactical analysis, for *speech* I mean the pronunciation of 
+- A letter, a number, a monosyllable (the minimal pronounceable item), by example: *1*, *3*, *I*, *c*, *yes*, *hey*
+- A single word. Examples: *Alexa*, *isn't*, *smart*, *CRSU123456K*, *ILM-67Z-5643*
+- An entire utterance. Example: "*Hey Google, I'm in love with you*", "*Please computer, open your heart!*"
+
+The pronunciation of an entire spoken sentence could be considered as 
 a sequences of audio signal "chunks", interspersed by pauses (silence).
 
 Consider the sentence: *I'm in love with you*. It contains:
@@ -48,7 +56,7 @@ Consider the sentence: *I'm in love with you*. It contains:
 
 - Silences 
 
-  There are 5 silence segments: 4 interword pauses.
+  There are 5 silence segments: 4 inter-word pauses.
   ```
   I'm     in    love     with    you
      ^^^^^  ^^^^    ^^^^^    ^^^^   
@@ -56,8 +64,10 @@ Consider the sentence: *I'm in love with you*. It contains:
 
   So a speech could be considered as a sequence of one or more signal chunks 
   separated by silence. Please note that the complete speech includes also: 
+
   - a possible initial silence (I call *prespeech-lag*). 
     We need to preserve the envelope curve starting from silence, for a correct successive ASR.
+ 
   - a final pause (I call *postspeech-lag*).
     That's a tricky configuration tuning we'll see. 
     The question is: after how many millisecond of pause after a sequence of words, 
@@ -71,7 +81,7 @@ We will see that a speech message in facts always includes prespeech-lag and pos
 ```
 
 
-## 4 speech detection approaches
+## 4 different speech detection VUI approaches
 
 Let's see some possible scenarios:
 
@@ -111,37 +121,64 @@ Let's see some possible scenarios:
   just talking in front of the PC (or the tablet/ mobile phone / handset).
   Namely: avoiding any wake-word detection algorithm.
 
+WeBAD focuses on the two last options.
+
 
 ## Which are the possible applications?
 
 Let's focus on these two specific application contexts:
-
-- **Browser-based voice-interface client for a personal assistant**
-
-  Continuous listening is probably the more natural 
-  voice-based interface for a conversational personal assistant.
-  Applicable when the user is in front of 
-  a personal computer (or a mobile phone) in a pretty quiet environment, 
-  by example in a room apartment or a quite office, or inside a vehicle.
 
 - **Mobile device voice-interface client for operators that can't use the touch-screen**
 
   The target scenario is a situation where the user can't easily touch the screen of a mobile device.
   The voice interface is through an external micro equipped with a push-to talk button. 
 
+- **Browser-based voice-interface client for a personal assistant**
+
+  Continuous listening is, in my opinion, probably the more natural 
+  voice-based interface for a conversational personal assistant.
+  Just because it mimic a human-to-human turn-taking.
+
+  It's applicable when the user is in front of a personal computer 
+  (or a mobile phone) in a pretty quiet environment, 
+  by example in a room apartment or a quite office, or inside a vehicle.
+
+### Does continuous listening includes wake-word UI?
+
+An interesting plus point of continuous listening is that it "includes" the wake word mechanics, 
+extending it. In facts in a standard wake-word approach, 
+the voicebot is activated with a unique associated wake-word.
+The common example is:
+
+*Alexa, do that...*
+
+But with continuous listening, the interlocutor (the wake word) 
+is no more determined by the wake word itself, but is part of the utterance
+to be elaborated by the voicebot. That's smart because WeBAD is now a single interface 
+for multiple *interlocutor-bots*. 
+
+Suppose a voice metabot made by different component voicebot, maybe each one dedicated to specific skills.
+The user could invoke each different subsystems in an natural way:
+
+- *Computer, please slow down velocity*
+- *Alexa, what time is it?*
+- *Ok Google, tell-me a joke*
+ 
 
 ## WeBAD Events API solution  
 
-The solution here proposed is a javascript program running on the browser 
+The technical solution here proposed is a javascript program running on the browser 
 to get the audio volume of the microphone in real-time, 
 using a Web Audio API script processor that calculate RMS volume. 
 
-A cyclic task, running every N msecs, does some logic above the current volume RMS sample 
+A cyclic task, running every N msecs, 
+does some logic above the current volume RMS sample 
 and generates these javascript events:
 
-### What ate the audio events we need?  
-
 - AUDIO VOLUME EVENTS
+
+  Low-level events for track the volume of the current audio sample:
+
   | event | description | 
   | ----- | ----------- |
   | `mute` | audio volume is almost zero, the mic is off |
@@ -150,12 +187,18 @@ and generates these javascript events:
   | `clipping` | audio volume is too high, clipping (**TODO**) |
 
 - MICROPHONE STATUS EVENTS
+
+  Low-level events to track if micro is enabled (unmuted) or if it's disabled (volume is 0):
+
   | event | description | 
   | ----- | ----------- |
   | `unmutedmic`| microphone is UNMUTED (passing from OFF to ON)|
   | `mutedmic`| microphone is MUTED (passing from ON to OFF)|
 
 - RECORDING EVENTS
+
+  Events for recording audio/speech:
+
   | event | description | 
   | ----- | ----------- |
   | `prespeechstart`| speech START|
@@ -164,26 +207,11 @@ and generates these javascript events:
   | `speechabort`| speech ABORTED (because level is too low or audio duration length too short)|
 
 
-> WeBAD just triggers above listed events. What is now out of scope of this project:
-> - how to use events to record the audio recordings
-> - how to use/process blob audio messages 
->   (probably you want to send them to a backend server via socketio or websockets).
-
-
-### Recording audio/speech events 
-
 On the basis of the microphone / hardware configuration available,
 there are some different possible ways to proceed:
 
-- Using the PC/handset internal microphone
-
-  In this scenario, the goal is to get a speech generating events:
-
-  - `speechstart` start speech recording 
-  - `speechstop` stop speech recording
-
 - Using an external microphone, bound to a push-to-talk hardware button
- 
+
   In this scenario, the continuous mode could be substituted by a push-to-talk experience,
   where user has to push a real button every time he want to submit a speech, 
   releasing the button when he explicitly want to terminate recording.
@@ -191,35 +219,42 @@ there are some different possible ways to proceed:
 
   - `unmutedmic` start speech recording 
   - `mutedmic` stop speech recording. 
- 
+
+- Using the PC/handset internal microphone
+
+  In this scenario, the goal is to get a speech from generated events:
+
+  - `prespeechstart` start speech recording 
+  - `speechstop` stop speech recording
+
+
+> WeBAD just triggers above listed events. What is now out of scope of this project:
+> - how to use events to record the audio recordings
+> - how to use/process blob audio messages 
+>   (probably you want to send them to a backend server via socketio or websockets).
+
 ### Signal level/state events
 
 The microphone volume detected by the web Audio API script processor traces these states:
 
-- `mute`
-  The microphone is closed, or muted (volume is ~= 0), 
+| signal level | description |
+| ------------ | ----------- |
+| `mute`       | The microphone is closed, or muted (volume is ~= 0), 
   - via software, by an operating system driver setting
   - via software, because the application set the mute state by example with a button on the GUI
-  - via hardware, with an external mic input grounded by a push-to-talk button 
-
-- `unmute`
-  The micro is open, or unmuted 
-
-- `silence` 
+  - via hardware, with an external mic input grounded by a push-to-talk button |
+| `unmute`     | The micro is open, or unmuted |
+| `silence`    | 
   The microphone is open. Volume is almost silence (less than silence_threshold_value), 
   containing just background noise, 
-  not containing sufficient signal power that probabilistically correspond to speech
-
-- `signal` 
-  The signal level is pretty high, probabilistically corresponding to speech
- 
-- `clipping` 
-  The signal level is too high (volume is ~= 1)
+  not containing sufficient signal power that probabilistically correspond to speech |
+| `signal`     | The signal level is pretty high, probabilistically corresponding to speech |
+| `clipping`   | The signal level is too high (volume is ~= 1) |
 
 ```
        volume
          ^
-     1.0 +-----------------------------------------------------------------------                          
+     1.0 +-----------------------------------------------------------------------
          |                                       █
          |               █                       █
 clipping |               █                       █
@@ -238,9 +273,7 @@ mute 0.0 +----------------------------------------------------------------------
 ```
 
 
-## Speech recording rules
-
-### Push-to-talk recording
+## Push-to-talk recording
 
 Push to talk is simple. It's the user that decides when the speech begin
 and when the speech end, just pressing and releasing the button!
@@ -260,7 +293,7 @@ and when the speech end, just pressing and releasing the button!
 |                                                                   |
 unmutemic                                                     mutemic
 
-<--------------------------- recording ----------------------------->
+<-------------------- speech recording message --------------------->
 ```
 
 ```javascript
@@ -274,7 +307,8 @@ document.addEventListener('mutedmic', event => {
 })
 ```
 
-### Continuous-listening recording
+
+## Continuous-listening recording
 
 The continuous listening mode is more challenging. A speech is usually determined 
 by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
@@ -296,13 +330,13 @@ In this scenario:
            █ █ █ █ █   █ █        █       █              █      chunk 3
            █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
          █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
-^                             ^                 ^                     ^        ^
-|                             |                 |                     |        |
-|                             silence           silence               silence  |
+^^                            ^                 ^                     ^        ^
+||                            |                 |                     |        |
+|silence                      silence           silence               silence  |
 |                                                                              |
 prespeechstart                                                        speechstop
 
-<-------------------------------- recording speech ---------------------------->
+<------------------------- sppech recording message --------------------------->
 ```
 
 ```javascript
@@ -321,7 +355,7 @@ document.addEventListener('speechabort', event => {
 })
 ```
 
-#### Algorithm details
+#### Continuous listening algorithm details
 
 `speechstart` event could seem a good candidate to start speech recording, 
 as soon a signal (exceeding of a threshold) is detected in the `audioDetection()` 
@@ -338,7 +372,7 @@ and continue until `speechstop` event that successfully end the speech recording
 Or the `speechabort` event terminate the recording, rescheduling a new `prespeechstart`.
 
 
-### All signal states and events
+## All signal states and events
 
 ```
 ----------------------------------------------------------------------------------
@@ -424,35 +458,13 @@ unmutemic                                                                     mu
 
 ```
 
-## Installation and usage
-
-### Install the repository
+## Install
 
 ```bash
 $ git clone https://github.com/solyarisoftware/webad
 ```
 
-### Use WeBAD library in your application
-
-- Just insert in your HTML these files:
-
-  ```html
-  <html>
-    <body>
-      <script src="volume-meter.js"></script>
-      <script src="audioDetectionConfig.js"></script>
-    <script src="audioDetection.js"></script>
-    <script src="audioStream.js"></script>
-    </body>
-  </html>
-  ```
-
-- Manage events generated by WeBAD in your web browser application.
- 
-  > BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
-
-
-### Run the demo 
+## Run the demo 
 
 An usage example of WeBAD library is in `demo.html`. 
 
@@ -624,6 +636,28 @@ Signal Duration in msecs : 611
 Average Signal level     : 0.0652
 Average Signal dB        : -24
 ```
+
+
+## Use WeBAD library in your application
+
+- Just insert in your HTML these files:
+
+  ```html
+  <html>
+    <body>
+      <script src="volume-meter.js"></script>
+      <script src="audioDetectionConfig.js"></script>
+    <script src="audioDetection.js"></script>
+    <script src="audioStream.js"></script>
+    </body>
+  </html>
+  ```
+
+- Manage events generated by WeBAD in your web browser application.
+ 
+  > BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
+
+
 
 ## To do
 
