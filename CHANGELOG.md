@@ -1,7 +1,7 @@
 # Changelog
 
-## v. 0.2.0
-
+## v. 0.2.1
+- README documentation full rework 
 - prespeechstart now is the candidate event to trigger the recording of the speech.
 
 ## v. 0.1.4

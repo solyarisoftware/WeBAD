@@ -96,7 +96,7 @@ function mute(timestamp, duration) {
  *    'unmutedmic'  -> microphone is UNMUTED (passing from OFF to ON)
  *
  *  RECORDING:
- *    'speechstart' -> speech recording START
+ *    'speechstart' -> speech START
  *
  */ 
 function signal(timestamp, duration) {
@@ -272,15 +272,14 @@ function sampleThresholdsDecision(muteVolume, speakingMinVolume) {
  */ 
 function prerecording( prespeechstartMsecs, timeoutMsecs ) {
   
-  const timestamp = Date.now()
+  ++ prerecordingItems
 
   const eventData = { 
     detail: { 
       //event: 'prespeechstart',
       volume: meter.volume, 
-      timestamp,
-      //duration,
-      items: ++ prerecordingItems
+      timestamp: Date.now(),
+      items: prerecordingItems
     } 
   }
 
@@ -310,12 +309,12 @@ function prerecording( prespeechstartMsecs, timeoutMsecs ) {
  *
  *  MICROPHONE:
  *    'unmutedmic'  -> microphone is UNMUTED (passing from OFF to ON)
- *    'mutedmic' -> microphone is MUTED (passing from ON to OFF)
+ *    'mutedmic'    -> microphone is MUTED (passing from ON to OFF)
  *
  *  RECORDING:
- *    'speechstart' -> speech recording START
- *    'speechstop'  -> speech recording STOP (success, recording seems a valid speech)
- *    'speechabort' -> speech recording ABORTED (because level is too low or audio duration length too short)
+ *    'speechstart' -> speech START
+ *    'speechstop'  -> speech STOP (success, recording seems a valid speech)
+ *    'speechabort' -> speech ABORTED (because level is too low or audio duration length too short)
  *
  *
  * @param {Object} config 

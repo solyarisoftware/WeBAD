@@ -6,6 +6,73 @@ Pronounce it *we-bad* or *web-ad*.
 
 ## How to detect speech, on the browser?
 
+You want to use the browser as a voice interface "frontend". Specifically you want to detect the user speech messages.
+
+This software component supply a solution for two scenarios:
+
+- **Hardware-button push-to-talk**
+ 
+  The user press a real/hardware button, that mute/un-mute an external mic.
+
+- **Continuous listening**
+
+  The audio is detected in real-time, 
+  just talking in front of the PC (or the tablet/ mobile phone / handset).
+  Namely: avoiding any wake-word detection algorithm.
+
+
+## What's a speech message?
+
+Consider user talking with the computer. I define "speech" an audio message 
+(a binary Blob in some CODEC format) to be elaborated by some backend voicebot logic. 
+
+In terms of linguistics syntax, for speech I mean 
+the pronunciation of a letter, a number, a monosyllable (the minimal pronounceable item), a word, an entire sentence. Examples:
+- *1*, *3*, *I*, *c*
+- *Alexa*, *in*, *love*, *CRSU123456K*, *ILM-67Z-5643*
+- *Ehi Google*, *I'm in love with you*
+
+From a trivial time-domain audio point of view, 
+the pronunciation of an entire sentence could be considered as 
+a sequences of audio signal "chunks", interspersed by pauses (silence).
+
+Consider the sentence: *I'm in love with you*. It contains:
+
+- Signal chunks 
+
+  In fact the sentence is composed by 5 words (sentences)
+  ```
+  I'm     in    love     with    you
+  ^^^     ^^    ^^^^     ^^^^    ^^^ 
+  ```
+
+- Silences 
+
+  There are 5 silence segments: 4 interword pauses.
+  ```
+  I'm     in    love     with    you
+     ^^^^^  ^^^^    ^^^^^    ^^^^   
+  ```
+
+  So a speech could be considered as a sequence of one or more signal chunks 
+  separated by silence. Please note that the complete speech includes also: 
+  - a possible initial silence (I call *prespeech-lag*). 
+    We need to preserve the envelope curve starting from silence, for a correct successive ASR.
+  - a final pause (I call *postspeech-lag*).
+    That's a tricky configuration tuning we'll see. 
+    The question is: after how many millisecond of pause after a sequence of words, 
+    we consider terminated the spoken sentence? 
+
+We will see that a speech message in facts always includes prespeech-lag and postspeech lag.
+
+```
+     I'm     in    love     with    you
+^^^^^   ^^^^^  ^^^^    ^^^^^    ^^^^   ^^^^^
+```
+
+
+## 4 speech detection approaches
+
 Let's see some possible scenarios:
 
 - Wake word detection
@@ -39,7 +106,7 @@ Let's see some possible scenarios:
 
 - **Continuous listening** (without wake-word detection)
 
-  The best experience is maybe the *continuous listening* mode, 
+  A great experience is maybe the *continuous listening* mode, 
   where audio is detected in real-time, 
   just talking in front of the PC (or the tablet/ mobile phone / handset).
   Namely: avoiding any wake-word detection algorithm.
@@ -91,12 +158,13 @@ and generates these javascript events:
 - RECORDING EVENTS
   | event | description | 
   | ----- | ----------- |
-  | `speechstart`| speech recording START|
-  | `speechstop`| speech recording STOP (success, recording seems a valid speech)|
-  | `speechabort`| speech recording ABORTED (because level is too low or audio duration length too short)|
+  | `prespeechstart`| speech START|
+  | `speechstart`| speech of first signal chunk START|
+  | `speechstop`| speech STOP (success, speech seems a valid speech)|
+  | `speechabort`| speech ABORTED (because level is too low or audio duration length too short)|
 
 
-> WeBAD just triggers above listed events. What is out of scope of this project:
+> WeBAD just triggers above listed events. What is now out of scope of this project:
 > - how to use events to record the audio recordings
 > - how to use/process blob audio messages 
 >   (probably you want to send them to a backend server via socketio or websockets).
@@ -151,11 +219,11 @@ The microphone volume detected by the web Audio API script processor traces thes
 ```
        volume
          ^
-     1.0 |                                                                                                 
+     1.0 +-----------------------------------------------------------------------                          
          |                                       █
          |               █                       █
-         |               █                       █
 clipping |               █                       █
+         |               █                       █
   signal |           █ █ █                       █   █
     |    |         █ █ █ █ █   █             █   █ █ █                    █
     |    |         █ █ █ █ █   █             █   █ █ █                  █ █ █
@@ -165,7 +233,8 @@ clipping |               █                       █
   signal |       █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █          █ █ █ █ █ █ █  
  silence |   █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █
   unmute | █ █ █ █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █  █   █ █ █ █ █ █ █ █ █
-mute 0.0 +------------------------------------------------------------------------> time  
+mute 0.0 +------------------------------------------------------------------------>
+                                                                         time (sec)
 ```
 
 
@@ -180,18 +249,18 @@ and when the speech end, just pressing and releasing the button!
 - `mutedmic` event stop recording
  
 ```
-             █ chunk 1
-           █ █
-         █ █ █                           
-       █ █ █ █ █   █                   chunk 2       █
-       █ █ █ █ █   █ █        █       █              █      chunk 3
-       █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
-     █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
+            █ chunk 1
+          █ █
+        █ █ █                           
+      █ █ █ █ █   █                   chunk 2       █
+      █ █ █ █ █   █ █        █       █              █      chunk 3
+      █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
+    █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
+^                                                                   ^   
+|                                                                   |
+unmutemic                                                     mutemic
 
-    ^                                                              ^   
-    |                                                              |
-    unmutemic                                                      mutemic
-    <--------------------------- recording ------------------------>
+<--------------------------- recording ----------------------------->
 ```
 
 ```javascript
@@ -210,76 +279,95 @@ document.addEventListener('mutedmic', event => {
 The continuous listening mode is more challenging. A speech is usually determined 
 by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
 
-signal -> pause -> signal -> pause -> ... -> signal -> silence
+prespeech-silence -> signal -> pause -> signal -> pause -> ... -> signal -> postspeech-silence
 
 In this scenario:
 
+- `prespeechstart` event is generated some milliseconds before the first signal chunk start
 - `speechstart` event is generated when a first speech chunk start 
-- `speechstop` event is generated when a successive speech is followed by a pause long `PAUSE_LAG` msecs
+- `speechstop` event is generated when a successive speech is followed by a pause long `postspeech_lag` msecs
 - `speechabort` event is generated when an initial speech chunk has too low volume or is too short.
 
 ```
-             █ chunk 1
-           █ █
-         █ █ █                           
-       █ █ █ █ █   █                   chunk 2       █
-       █ █ █ █ █   █ █        █       █              █      chunk 3
-       █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
-     █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
-     ^                    ^                 ^                     ^        ^    
-     |                    |                 |                     |        |  
-     speechstart          silence           silence               silence  speechstop
-     <------------------------------ recording ---------------------------->
+                 █ chunk 1
+               █ █
+             █ █ █                           
+           █ █ █ █ █   █                   chunk 2       █
+           █ █ █ █ █   █ █        █       █              █      chunk 3
+           █ █ █ █ █ █ █ █        █ █   █ █ █            █ █   █
+         █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █          █ █ █ █ █ █ █
+^                             ^                 ^                     ^        ^
+|                             |                 |                     |        |
+|                             silence           silence               silence  |
+|                                                                              |
+prespeechstart                                                        speechstop
+
+<-------------------------------- recording speech ---------------------------->
 ```
 
 ```javascript
-document.addEventListener('speechstart', event => { 
+document.addEventListener('prespeechstart', event => { 
   // start audio recording 
 })
 
 document.addEventListener('speechstop', event => {
-  // stop recording 
-  // process the speech
+  // stop recording the speech
 })
 
 document.addEventListener('speechabort', event => {
   // audio recording is not a valid speech
+  // restart recording the speech 
+  // (stop and start again)
 })
 ```
+
+#### Algorithm details
+
+`speechstart` event could seem a good candidate to start speech recording, 
+as soon a signal (exceeding of a threshold) is detected in the `audioDetection()` 
+function loop, every e.g. 50 msecs.
+
+But that's critical because in that way the recording start "abruptly", 
+possibly truncating few milliseconds of the initial speech.
+ 
+ The adopted solution is, instead of recording from the `speechstart` event,
+to foresee a repeated emission of `prespeechstart` events (e.g. every 500 msecs). 
+The speech start "virtually" recording when `prespeechstart` event trigger.
+The preemptive started recording continue until the real start of first signal chunk (`speechstart`)
+and continue until `speechstop` event that successfully end the speech recording.
+Or the `speechabort` event terminate the recording, rescheduling a new `prespeechstart`.
+
 
 ### All signal states and events
 
 ```
-                                                                                            ^
-                                                                                            |
-                                                                                          clipping
-                                        █                                                   | 
-                █                       █                                clipping threshold v    
-----------------█-----------------------█--------------------------------------------------- 
-                █                       █                                                   ^ 
-            █ █ █                       █   █                                               |
-          █ █ █ █ █   █             █   █ █ █                    █                          |
-          █ █ █ █ █   █   █         █   █ █ █                  █ █ █                        |
-          █ █ █ █ █ █ █ █ █         █   █ █ █                  █ █ █                        |
-        █ █ █ █ █ █ █ █ █ █ █       █   █ █ █          █   █   █ █ █ █                signal/speech
-        █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █        █ █ █   █ █ █ █                      |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █                      |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █ signal threshold   v
---------█-█-█-█-█-█-█-█-█-█-█-█-----█-█-█-█-█-█-█------█-█-█-█-█-█-█-█-█-------------------- 
-    █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █ █                    ^
-  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █ █ █ █ background noise   |   
-  ^     ^----------------------^    ^------------^    ^-----------------^       ^ ^         v 
-  |     |                      |    |            |    |                 |       | |
-  |     signal                 |    signal       |    signal            |       | |
-  |     |                      |                 |                      |       | |
-  |     |                      silence           silence                silence | |
-  |     |                                                               lag     | |
-  unmutemic                                                                     | mutemic
-        ^                                                                       ^
-        |                                                                       |
-        speechstart                                                             speechstop
+----------------------------------------------------------------------------------
+                                                                                  ^
+                                                                               clipping
+                                        █                                         v    
+----------------█-----------------------█----------------------------------------- 
+                █                       █                                         ^ 
+            █ █ █                       █   █                                     |
+          █ █ █ █ █   █             █   █ █ █                    █                |
+          █ █ █ █ █   █   █         █   █ █ █                  █ █ █              |
+          █ █ █ █ █ █ █ █ █         █   █ █ █                  █ █ █              |
+        █ █ █ █ █ █ █ █ █ █ █       █   █ █ █          █   █   █ █ █        signal/speech
+        █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █        █ █ █   █ █ █              |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █              |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            v
+--------█-█-█-█-█-█-█-█-█-█-█-█-----█-█-█-█-█-█-█------█-█-█-█-█-█-█-█------------ 
+    █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █        background
+  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █ █ █  █  █    noise
+----------------------------------------------------------------------------------
+^ ^     ^                      ^    ^            ^     ^                ^         ^ ^     
+| |     |                      |    |            |     |                |         | |
+| |     speechstart            |    signal       |     signal           |         | |
+| |                            silence           silence                silence   | |
+| |                                                                     lag       | |
+| prespeechstart                                                         speechstop |
+unmutemic                                                                     mutemic
 ```
 
 
@@ -537,20 +625,6 @@ Average Signal level     : 0.0652
 Average Signal dB        : -24
 ```
 
-#### Watch on youtube the screencast demos
-
-1. Demo shows triggering of events: 
-   `mute`, `silence`, `mute`, `startrecording`, `stoprecording` 
-   on Windows 10, Brave (~Chrome) browser
-
-   https://youtu.be/P0JY_U8ZUKU
-
-2. Demo shows triggering of `mutedmic` e `unmutedmic`, 
-   on Windows 10 PC, Brave (~Chrome) browser, using system settings
-
-   https://youtu.be/ZUWuLqENtZ8
-
-
 ## To do
 
 - [x] On the Demo: 
@@ -568,18 +642,6 @@ Average Signal dB        : -24
 
 - [ ] Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
 
-- [ ] Continuous listening delayed-recording issue
-  - `recordingstart` event start speech recording as soon a signal (exceeding of a threshold) 
-   is detected in the `audioDetection()` function loop, every e.g. 80 msecs.
-   That's critical because the recording start "abruptly", 
-   possibly truncating few milliseconds of the initial speech.
-
-   - Make sure that speech recognition engine (speech-to-text/ASR) is not affected. TBV.
- 
-   - Otherwise a possible solution is, instead of recording from the `speechstart` event,
-     to foresee a continuous pre-recording: WeBAD could automatically 
-     start recording at each `signal` and stopping it at next `silence`.
-     Or continue recording until the usual `recordingstop` event.
 
 ## Acknowledgments
 
