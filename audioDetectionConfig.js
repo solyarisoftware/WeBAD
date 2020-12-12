@@ -152,7 +152,9 @@ const DEFAULT_PARAMETERS_CONFIGURATION = {
   
   silenceVolume: VOLUME_SILENCE,
   
-  muteVolume: VOLUME_MUTE 
+  muteVolume: VOLUME_MUTE,
+
+  recordingEnabled: true
 
 }
 

@@ -121,7 +121,7 @@ Let's see some possible scenarios:
   just talking in front of the PC (or the tablet/ mobile phone / handset).
   Namely: avoiding any wake-word detection algorithm.
 
-WeBAD focuses on the two last options.
+WeBAD focuses on the two last scenarios.
 
 
 ## Which are the possible applications?
@@ -146,7 +146,7 @@ Let's focus on these two specific application contexts:
 ### Does continuous listening includes wake-word UI?
 
 An interesting plus point of continuous listening is that it "includes" the wake word mechanics, 
-extending it. In facts in a standard wake-word approach, 
+<your_server_IP> it. In facts in a standard wake-word approach, 
 the voicebot is activated with a unique associated wake-word.
 The common example is:
 
@@ -207,35 +207,10 @@ and generates these javascript events:
   | `speechabort`| speech ABORTED (because level is too low or audio duration length too short)|
 
 
-On the basis of the microphone / hardware configuration available,
-there are some different possible ways to proceed:
+### Signal level state tracking
 
-- Using an external microphone, bound to a push-to-talk hardware button
-
-  In this scenario, the continuous mode could be substituted by a push-to-talk experience,
-  where user has to push a real button every time he want to submit a speech, 
-  releasing the button when he explicitly want to terminate recording.
-  To accomplish this case we use two different events:
-
-  - `unmutedmic` start speech recording 
-  - `mutedmic` stop speech recording. 
-
-- Using the PC/handset internal microphone
-
-  In this scenario, the goal is to get a speech from generated events:
-
-  - `prespeechstart` start speech recording 
-  - `speechstop` stop speech recording
-
-
-> WeBAD just triggers above listed events. What is now out of scope of this project:
-> - how to use events to record the audio recordings
-> - how to use/process blob audio messages 
->   (probably you want to send them to a backend server via socketio or websockets).
-
-### Signal level/state events
-
-The microphone volume detected by the web Audio API script processor traces these states:
+The microphone volume is detected by WeBAD, 
+that trigger events and maintains a current state, with this discrete values:
 
 | signal level | description |
 | ------------ | ----------- |
@@ -266,8 +241,67 @@ mute 0.0 +----------------------------------------------------------------------
                                                                          time (sec)
 ```
 
+### All events and states
 
-## Push-to-talk recording
+```
+----------------------------------------------------------------------------------
+                                                                                  ^
+                                                                               clipping
+                                        █                                         v    
+----------------█-----------------------█----------------------------------------- 
+                █                       █                                         ^ 
+            █ █ █                       █   █                                     |
+          █ █ █ █ █   █             █   █ █ █                    █                |
+          █ █ █ █ █   █   █         █   █ █ █                  █ █ █              |
+          █ █ █ █ █ █ █ █ █         █   █ █ █                  █ █ █              |
+        █ █ █ █ █ █ █ █ █ █ █       █   █ █ █          █   █   █ █ █        signal/speech
+        █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █        █ █ █   █ █ █              |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █              |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            |
+        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            v
+--------█-█-█-█-█-█-█-█-█-█-█-█-----█-█-█-█-█-█-█------█-█-█-█-█-█-█-█------------ 
+    █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █        background
+  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █ █ █  █  █    noise
+----------------------------------------------------------------------------------
+^ ^     ^                      ^    ^            ^     ^                ^         ^ ^     
+| |     |                      |    |            |     |                |         | |
+| |     speechstart            |    signal       |     signal           |         | |
+| |                            silence           silence                silence   | |
+| |                                                                     lag       | |
+| prespeechstart                                                         speechstop |
+unmutemic                                                                     mutemic
+```
+
+
+## Recording modes
+
+On the basis of the microphone / hardware configuration available,
+there are some different possible ways to record speech:
+
+- Using an external microphone, bound to a push-to-talk hardware button
+
+  In this scenario, the continuous mode could be substituted by a push-to-talk experience,
+  where user has to push a real button every time he want to submit a speech, 
+  releasing the button when he explicitly want to terminate recording.
+  To accomplish this case we use two different events:
+
+  - `unmutedmic` start speech recording 
+  - `mutedmic` stop speech recording. 
+
+- Using the PC/handset internal microphone
+
+  In this scenario, the goal is to get a speech from generated events:
+
+  - `prespeechstart` start speech recording 
+  - `speechstop` stop speech recording
+
+> WeBAD just triggers above listed events. What is now out of scope of this project:
+> - how to use events to record the audio recordings
+> - how to use/process blob audio messages 
+>   (probably you want to send them to a backend server via socketio or websockets).
+
+### Push-to-talk recording
 
 Push to talk is simple. It's the user that decides when the speech begin
 and when the speech end, just pressing and releasing the button!
@@ -301,8 +335,7 @@ document.addEventListener('mutedmic', event => {
 })
 ```
 
-
-## Continuous-listening recording
+### Continuous-listening recording
 
 The continuous listening mode is more challenging. A speech is usually determined 
 by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
@@ -366,37 +399,21 @@ and continue until `speechstop` event that successfully end the speech recording
 Or the `speechabort` event terminate the recording, rescheduling a new `prespeechstart`.
 
 
-## All signal states and events
+## Parameters tuning
 
-```
-----------------------------------------------------------------------------------
-                                                                                  ^
-                                                                               clipping
-                                        █                                         v    
-----------------█-----------------------█----------------------------------------- 
-                █                       █                                         ^ 
-            █ █ █                       █   █                                     |
-          █ █ █ █ █   █             █   █ █ █                    █                |
-          █ █ █ █ █   █   █         █   █ █ █                  █ █ █              |
-          █ █ █ █ █ █ █ █ █         █   █ █ █                  █ █ █              |
-        █ █ █ █ █ █ █ █ █ █ █       █   █ █ █          █   █   █ █ █        signal/speech
-        █ █ █ █ █ █ █ █ █ █ █       █ █ █ █ █ █        █ █ █   █ █ █              |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █              |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            |
-        █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █            v
---------█-█-█-█-█-█-█-█-█-█-█-█-----█-█-█-█-█-█-█------█-█-█-█-█-█-█-█------------ 
-    █   █ █ █ █ █ █ █ █ █ █ █ █     █ █ █ █ █ █ █      █ █ █ █ █ █ █ █        background
-  █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █ █    █ █ █ █ █ █ █ █ █  █  █    noise
-----------------------------------------------------------------------------------
-^ ^     ^                      ^    ^            ^     ^                ^         ^ ^     
-| |     |                      |    |            |     |                |         | |
-| |     speechstart            |    signal       |     signal           |         | |
-| |                            silence           silence                silence   | |
-| |                                                                     lag       | |
-| prespeechstart                                                         speechstop |
-unmutemic                                                                     mutemic
-```
+The WeBAD algorithm is based upon a set of parameters:
+
+| parameter | description | default value |
+| --------- | ----------- | ------------- |
+| `SAMPLE_POLLING_MSECS` | polling time clock in milliseconds. Is the sampling rate to run speech detection calculations | 50 |
+| `MAX_INTERSPEECH_SILENCE_MSECS` | elapsed time in milliseconds of silence (pause) between continuous blocks of signal | 600 |
+| `POST_SPEECH_MSECS` | elapsed time in milliseconds of silence after the last speech chunk | 600 |
+| `PRE_RECORDSTART_MSECS` | elapsed time in milliseconds before the speechstart event | 600 |
+| `MIN_SIGNAL_DURATION ` | minimum elapsed time in millisecond for an audio signal block | 400 |
+| `MIN_AVERAGE_SIGNAL_VOLUME` | minimum volume vale (in average) of a signal block chain | 0.04 | 
+| `VOLUME_SIGNAL ` |  | 0.02 |
+| `VOLUME_SILENCE ` |  | 0.001 |
+| `VOLUME_MUTE ` |  | 0.00001 |
 
 
 ## Architecture
@@ -460,39 +477,34 @@ $ git clone https://github.com/solyarisoftware/webad
 
 ## Run the demo 
 
-An usage example of WeBAD library is in `demo.html`. 
-
 On top of the WeBAD JS library, this repo supply a web page demo that how manage events generated by WeBAD.
-A very basic HTML show events changes and plays the recorded audio/speech.
+A very basic HTML 
+- show events changes 
+- record speech in real-time and plays the recorded audio/speech as soon the recording finish.
 
-- On localhost
 
-  Run the demo on your localhost, by example using firefox browser:
+You can run the demo on your localhost, by example using firefox browser:
 
-  ```bash
-  $ cd webad
-  $ firefox demo.html
-  ```
+```bash
+$ cd webad
+$ firefox demo.html
+```
 
-- Through an HTTPS server
+Or you can run the demo through an HTTPS server (for security reasons, Web Audio API doesn't run on HTTP)
+To serve HTTPS static pages, I'm happy with [http-server package](https://github.com/http-party/http-server), 
+using with this setup (of course you need a certificate, maybe selfsigned):
 
-  WARNING: To run the demo (and any application using Web Audio API) you need to serve the web page with an HTTPS server.
-  To serve HTTPS static pages, I'm happy with [http-server package](https://github.com/http-party/http-server), 
-  using with this setup (of course you need a certificate, maybe selfsigned):
+```
+$ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
 
-  ```
-  $ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
+Starting up http-server, serving ./ through https
+Available on:
+  https://<your_server_IP>:8443
+  https://<your_server_IP>:8443
+Hit CTRL-C to stop the server
+```
 
-  Starting up http-server, serving ./ through https
-  Available on:
-    https://127.0.0.1:8443
-    https://192.168.1.134:8443
-  Hit CTRL-C to stop the server
-  ```
-
-  On the browser, goto the page: `https://192.168.1.134:8443/demo.html`
-
-#### console log (excerpt)
+On the browser, goto the page: `https://<your_server_IP>:8443/demo.html`
 
 The demo optionally print console logs details.
 
@@ -652,29 +664,36 @@ Average Signal dB        : -24
   > BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
 
 
-
 ## To do
 
-- [x] On the Demo: 
-  add recording/download after the recordingstop event, 
-  allowing user to listen the record clip
+- [ ] Demo web page
+  - add input boxes for significant parameters, 
+    allowing to modify parameters in real-time
 
-- [ ] On the Demo: 
-  add input boxes for significant parameters, 
-  allowing to modify parameters in real-time
+  - The demo web page could act as a **parameter setting tuning tool**.
+    Interactive parameter changes would transform the demo into a tool to tune/calibrate parameters
 
-- [ ] Demo as a **parameter setting tuning tool** 
-   Above features would allow to transform the demo into a tool to tune/calibrate parameters
+  - made a visually decent page 
 
-- [ ] add event for clipping
+- [ ] add clipping event
 
-- [ ] Please Giorgio, transform the ugly all-see-all in ES6 JS modules!
+- [ ] Explain the parameter tuning issue
+
+- [ ] Please Giorgio, remove global vars and transform the ugly "all-see-all" in ES6 JS modules!
+
+
+## How to contribute
+
+Any contrinute is welcome. Maybe you want to: 
+- open a new discussion a specific topic opening a post [here](https://github.com/solyarisoftware/WeBAD/discussions)
+- contact me via [e-mail](mailto:giorgio.robino@gmail.com)
 
 
 ## Acknowledgments
 
 I used the volume-meter Web Audio API scriptprocessor 
-written by Chris Wilson here: https://github.com/cwilso/volume-meter 👏👏
+written by Chris Wilson here: https://github.com/cwilso/volume-meter 
+👏👏👏👏
 
 
 ## License

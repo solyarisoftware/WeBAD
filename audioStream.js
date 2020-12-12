@@ -13,7 +13,7 @@ function audioStream(stream) {
   // kick off the visual updating
   //drawLoop();
 
-  audioDetection()
+  audioDetection(DEFAULT_PARAMETERS_CONFIGURATION)
 
   audioRecorder(stream)
 }

@@ -303,37 +303,46 @@ function prerecording( prespeechstartMsecs, timeoutMsecs ) {
  * emit these DOM custom events: 
  *
  *  AUDIO SAMPLING:
- *    'signal'  -> audio volume is high, so probably user is speaking.
- *    'silence' -> audio volume is pretty low, the mic is on but there is not speech.
- *    'mute'    -> audio volume is almost zero, the mic is off.
+ *    'clipping' -> TODO, audio volume is clipping (~1), 
+ *                  probably user is speaking, but volume produces distorsion
+ *    'signal'   -> audio volume is high, so probably user is speaking.
+ *    'silence'  -> audio volume is pretty low, the mic is on but there is not speech.
+ *    'mute'     -> audio volume is almost zero, the mic is off.
  *
  *  MICROPHONE:
  *    'unmutedmic'  -> microphone is UNMUTED (passing from OFF to ON)
  *    'mutedmic'    -> microphone is MUTED (passing from ON to OFF)
  *
  *  RECORDING:
- *    'speechstart' -> speech START
- *    'speechstop'  -> speech STOP (success, recording seems a valid speech)
- *    'speechabort' -> speech ABORTED (because level is too low or audio duration length too short)
+ *    'prespeechstart' -> speech prerecording START
+ *    'speechstart'    -> speech START
+ *    'speechstop'     -> speech STOP (success, recording seems a valid speech)
+ *    'speechabort'    -> speech ABORTED (because level is too low or audio duration length too short)
  *
  *
  * @param {Object} config 
+ * @see DEFAULT_PARAMETERS_CONFIGURATION object in audioDetectionConfig.js 
  *
  * @see https://javascript.info/dispatch-events
  *
  */
 
-function audioDetection(config=DEFAULT_PARAMETERS_CONFIGURATION) {
+function audioDetection(config) {
 
   setTimeout( 
     () => {
 
       prerecording( config.prespeechstartMsecs, config.timeoutMsecs )
 
-      sampleThresholdsDecision(config.muteVolume, config.speakingMinVolume)
+      // to avoid feedback, recording could be suspended 
+      // when the system play audio with a loudspeakers
+      if (config.recordingEnabled) {
+
+        sampleThresholdsDecision(config.muteVolume, config.speakingMinVolume)
+      }  
 
       // recursively call this function
-      audioDetection()
+      audioDetection(config)
 
     }, 
     config.timeoutMsecs 

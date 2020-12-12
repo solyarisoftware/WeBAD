@@ -30,16 +30,34 @@ function audioRecorder(stream) {
 
 function onRecordingReady(e) {
 
-  // audio play just if recording is not aborted
+  //
+  // listen recording (audio play) 
+  // just if speech is not aborted
+  //
   if (audioPlay) {
 
+    //
+    // you don't want to record while playing (through loudspeakers), 
+    // to avoid that playback audio feedback in the mic input!
+    // 
+    suspendRecording()
+
     const audio = document.getElementById('audio')
+
     // e.data contains a blob representing the recording
     audio.src = URL.createObjectURL(e.data)
-    audio.play()
-  
-  }  
 
+    audio.play()
+    
+    //
+    // you want to resume recording after the audio playback
+    //
+    audio.onended = () => {
+      resumeRecording() 
+      //console.log('recordingEnabled ' + DEFAULT_PARAMETERS_CONFIGURATION.recordingEnabled)
+    }  
+  }
+  
 }
 
 
@@ -47,16 +65,6 @@ function startRecording() {
   recorder.start()
 }
 
-/**
- * restartRecording
- *
- * abort and start
- */ 
-function restartRecording() {
-  recorder.stop()
-  audioPlay = false
-  recorder.start()
-}
 
 function stopRecording() {
   // Stopping the recorder will eventually trigger the `dataavailable` event and we can complete the recording process
@@ -65,9 +73,41 @@ function stopRecording() {
 }
 
 
+/**
+ * restartRecording
+ *
+ * abort and start
+ */ 
+function restartRecording() {
+  
+  // https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder/state
+  //console.log('recorder ' +  recorder.state )
+
+  // need otherwise I get on Chrome the error:
+  // Failed to execute 'stop' on 'MediaRecorder': The MediaRecorder's state is 'inactive'.
+  if (recorder.state != 'inactive')
+    recorder.stop()
+
+  audioPlay = false
+  recorder.start()
+  
+}
+
 function abortRecording() {
   // Stopping the recorder will eventually trigger the `dataavailable` event and we can complete the recording process
   recorder.stop()
   audioPlay = false
 }
+
+
+// to suspend recording when the system play audio with a loudspeaker, avoiding feedback
+function suspendRecording() {
+  DEFAULT_PARAMETERS_CONFIGURATION.recordingEnabled = false
+}  
+
+
+function resumeRecording() {
+  DEFAULT_PARAMETERS_CONFIGURATION.recordingEnabled = true
+}  
+
 
