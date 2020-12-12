@@ -239,15 +239,9 @@ The microphone volume detected by the web Audio API script processor traces thes
 
 | signal level | description |
 | ------------ | ----------- |
-| `mute`       | The microphone is closed, or muted (volume is ~= 0), 
-  - via software, by an operating system driver setting
-  - via software, because the application set the mute state by example with a button on the GUI
-  - via hardware, with an external mic input grounded by a push-to-talk button |
+| `mute`       | The microphone is closed, or muted (volume is ~= 0). Via software, by an operating system driver setting. Via software, because the application set the mute state by example with a button on the GUI. Via hardware, with an external mic input grounded by a push-to-talk button |
 | `unmute`     | The micro is open, or unmuted |
-| `silence`    | 
-  The microphone is open. Volume is almost silence (less than silence_threshold_value), 
-  containing just background noise, 
-  not containing sufficient signal power that probabilistically correspond to speech |
+| `silence`    | The microphone is open. Volume is almost silence (less than silence_threshold_value), containing just background noise, not containing sufficient signal power that probabilistically correspond to speech |
 | `signal`     | The signal level is pretty high, probabilistically corresponding to speech |
 | `clipping`   | The signal level is too high (volume is ~= 1) |
 
