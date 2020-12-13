@@ -1,5 +1,10 @@
 # Changelog
 
+## v. 0.3.1
+
+- README documentation updated 
+- video demo added 
+
 ## v. 0.3.0
 
 - continuous mode: audioDetection is suspended when audio is playback, 

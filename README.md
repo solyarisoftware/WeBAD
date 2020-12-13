@@ -6,7 +6,8 @@ Pronounce it *we-bad* or *web-ad*.
 
 ## How to detect speech, on the browser?
 
-You want to use the browser as a voice interface "frontend". Specifically you want to detect the user speech messages.
+You want to use the browser as a voice interface "frontend". 
+Specifically you want to detect the user speech messages.
 
 WeBAD supply a solution for two specific scenarios:
 
@@ -20,20 +21,21 @@ WeBAD supply a solution for two specific scenarios:
 
    The speech is detected in real-time, 
    just talking in front of the PC (or the tablet/ mobile phone / handset).
-   Namely: avoiding any wake-word detection algorithm.
+   Namely: **avoiding any wake-word detection algorithm**.
    You want to record the audio blob from when the user start to talk, 
    to when the user finish the spoken utterance! 
 
 
 ## What's a speech message?
 
-Consider user talking with the computer. I define "speech" an audio message 
+Consider user talking with the computer. I define *speech* an audio message 
 (a binary Blob in some codec format) to be elaborated by some backend voicebot logic. 
 
-> With *audio elaboration* I means a text transcript with an ASR engine 
+> With *audio message elaboration* I means a text transcript with an ASR engine 
 > (followed by a dialog manager, see my own [NaifJs](https://github.com/solyarisoftware/naifjs). 
 > That's out of scope of current project.
-> We here need just to collect  the audio input, from ta web browser client, to be submitted to a backend engine.
+> We here need just to collect  the audio input, from a web browser client, 
+> to be submitted to a backend engine.
 > Se also the [Architecture](#architecture) paragraph.
 
 In terms of syntactical analysis, for *speech* I mean the pronunciation of 
@@ -42,42 +44,56 @@ In terms of syntactical analysis, for *speech* I mean the pronunciation of
 - An entire utterance. Example: "*Hey Google, I'm in love with you*", "*Please computer, open your heart!*"
 
 The pronunciation of an entire spoken sentence could be considered as 
-a sequences of audio signal "chunks", interspersed by pauses (silence).
+a sequences of audio signal blocks, I call *chunks*, interspersed by pauses (silence).
 
-Consider the sentence: *I'm in love with you*. It contains:
+Consider the sentence: 
+
+```
+I'm in love with you
+```
+
+It contains a sequence of:
 
 - Signal chunks 
 
   In fact the sentence is composed by 5 words (sentences)
   ```
   I'm     in    love     with    you
-  ^^^     ^^    ^^^^     ^^^^    ^^^ 
+  ___     __    ____     ____    ___ 
+  ^       ^     ^        ^       ^
+  signal chunks
+
   ```
 
-- Silences 
+- Inter-speech silences 
 
   There are 5 silence segments: 4 inter-word pauses.
   ```
   I'm     in    love     with    you
-     ^^^^^  ^^^^    ^^^^^    ^^^^   
+     _____  ____    _____    ____   
+     ^      ^       ^        ^       
+     silence chunks
   ```
 
-  So a speech could be considered as a sequence of one or more signal chunks 
-  separated by silence. Please note that the complete speech includes also: 
+So a speech could be considered as a sequence of one or more signal chunks 
+separated by silence chunks. Please note that the complete speech includes also: 
 
-  - a possible initial silence (I call *prespeech-lag*). 
-    We need to preserve the envelope curve starting from silence, for a correct successive ASR.
- 
-  - a final pause (I call *postspeech-lag*).
-    That's a tricky configuration tuning we'll see. 
-    The question is: after how many millisecond of pause after a sequence of words, 
-    we consider terminated the spoken sentence? 
+- An initial silence (I call *prespeech-lag*). 
+  That's because we need to preserve the envelope curve starting from silence, 
+  to let a speech-to-text engine to transcript successfully the sentence.
 
-We will see that a speech message in facts always includes prespeech-lag and postspeech lag.
+- a final silence (I call *postspeech-lag*).
+  That's a tricky configuration tuning we'll see. 
+  The question is: after how many millisecond of pause after a sequence of words, 
+  we consider terminated the spoken sentence? 
+
+We will see that a speech message (made by WeBAD) always includes prespeech-lag and postspeech lag.
 
 ```
      I'm     in    love     with    you
-^^^^^   ^^^^^  ^^^^    ^^^^^    ^^^^   ^^^^^
+_____   _____  ____    _____    ____   _____
+^                                      ^
+prespeech-lag                          postspeech-lag
 ```
 
 
@@ -85,21 +101,21 @@ We will see that a speech message in facts always includes prespeech-lag and pos
 
 Let's see some possible scenarios:
 
-- Wake word detection
+- (1) Wake word detection
 
   Currently this is considered the common way to push speech messages on a voice interfaced system.
-  Wake word detection, especially if you want to have your own word sequences, 
+  Wake word detection, especially if you want to have your own custom word sequences, 
   need a specialized training of a neural net and a cpu-intensive run-time engine 
-  that has to run on the browser. This project do not face this path.
+  that has to run on the browser. WeBAD just escapes from this approach.
 
-- Push-to-talk
+- (2) Push-to-talk
 
   That's the traditional/safe way to generate audio messages 
   (see radio mobile/walkie-talkie). 
   The user push a button, start to talk, release the button when finished to talk.
   Note that push to talk could be implemented on the browser in two way:
 
-  - Software-button push-to-talk (web page hotkey) 
+  - (2.1) Software-button push-to-talk (web page *hotkey*) 
 
     That's the simplest approach on GUI interface. Consider a web browser, 
     on a mobile device you have a touch interface, 
@@ -107,21 +123,20 @@ Let's see some possible scenarios:
     So you can have an HTML button (hotkey) that, when pressed, triggers a recording. 
     Through a keyboard or a touch screen, 
     the user press a key or touch a (button on the) screen to talk.
-    See [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/).
     But that is not a touch-less / keyboard-less solution.
 
-  - **Hardware-button push-to-talk**
+  - (2.2) **Hardware-button push-to-talk**
 
     The user press a real/hardware button, that maybe mute/un-mute an external mic.
 
-- **Continuous listening** (without wake-word detection)
+- (3) **Continuous listening** (without wake-word detection)
 
   A great experience is maybe the *continuous listening* mode, 
   where audio is detected in real-time, 
   just talking in front of the PC (or the tablet/ mobile phone / handset).
   Namely: avoiding any wake-word detection algorithm.
 
-WeBAD focuses on the two last scenarios.
+WeBAD focuses on the two last scenarios (2.2) and (3).
 
 
 ## Which are the possible applications?
@@ -145,19 +160,20 @@ Let's focus on these two specific application contexts:
 
 ### Does continuous listening includes wake-word UI?
 
-An interesting plus point of continuous listening is that it "includes" the wake word mechanics, 
-<your_server_IP> it. In facts in a standard wake-word approach, 
-the voicebot is activated with a unique associated wake-word.
-The common example is:
+An interesting plus point of continuous listening is that it "includes" the wake word mechanics.
+In a standard wake-word approach, the voicebot is activated with a unique associated wake-word.
+Two common examples are:
 
-*Alexa, do that...*
+- *Alexa, do this...*
+- *Ok Google, do that...*
 
-But with continuous listening, the interlocutor (the wake word) 
-is no more determined by the wake word itself, but is part of the utterance
-to be elaborated by the voicebot. That's smart because WeBAD is now a single interface 
-for multiple *interlocutor-bots*. 
+But with continuous listening, the computer-side interlocutor 
+is no more determined by a single wake word itself, but it's part of the utterance
+to be elaborated by the voicebot. 
+That's smart because WeBAD is now a single interface for multiple *interlocutor-bots*. 
 
-Suppose a voice metabot made by different component voicebot, maybe each one dedicated to specific skills.
+Suppose a voice metabot (main bot) made by different component voicebots, 
+maybe each one dedicated to specific skills.
 The user could invoke each different subsystems in an natural way:
 
 - *Computer, please slow down velocity*
@@ -165,7 +181,7 @@ The user could invoke each different subsystems in an natural way:
 - *Ok Google, tell-me a joke*
  
 
-## WeBAD Events API solution  
+## WeBAD Event-bus API solution  
 
 The technical solution here proposed is a javascript program running on the browser 
 to get the audio volume of the microphone in real-time, 
@@ -180,7 +196,7 @@ and generates these javascript events:
   Low-level events for track the volume of the current audio sample:
 
   | event | description | 
-  | ----- | ----------- |
+  | :---: | ----------- |
   | `mute` | audio volume is almost zero, the mic is off |
   | `silence` | audio volume is pretty low, the mic is on but there is not speech |
   | `signal` | audio volume is high, so probably user is speaking |
@@ -191,7 +207,7 @@ and generates these javascript events:
   Low-level events to track if micro is enabled (unmuted) or if it's disabled (volume is 0):
 
   | event | description | 
-  | ----- | ----------- |
+  | :---: | ----------- |
   | `unmutedmic`| microphone is UNMUTED (passing from OFF to ON)|
   | `mutedmic`| microphone is MUTED (passing from ON to OFF)|
 
@@ -200,7 +216,7 @@ and generates these javascript events:
   Events for recording audio/speech:
 
   | event | description | 
-  | ----- | ----------- |
+  | :---: | ----------- |
   | `prespeechstart`| speech START|
   | `speechstart`| speech of first signal chunk START|
   | `speechstop`| speech STOP (success, speech seems a valid speech)|
@@ -213,7 +229,7 @@ The microphone volume is detected by WeBAD,
 that trigger events and maintains a current state, with this discrete values:
 
 | signal level | description |
-| ------------ | ----------- |
+| :----------: | ----------- |
 | `mute`       | The microphone is closed, or muted (volume is ~= 0). Via software, by an operating system driver setting. Via software, because the application set the mute state by example with a button on the GUI. Via hardware, with an external mic input grounded by a push-to-talk button |
 | `unmute`     | The micro is open, or unmuted |
 | `silence`    | The microphone is open. Volume is almost silence (less than silence_threshold_value), containing just background noise, not containing sufficient signal power that probabilistically correspond to speech |
@@ -340,13 +356,13 @@ document.addEventListener('mutedmic', event => {
 The continuous listening mode is more challenging. A speech is usually determined 
 by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
 
-prespeech-silence -> signal -> pause -> signal -> pause -> ... -> signal -> postspeech-silence
+prespeech-lag -> signal -> pause -> signal -> pause -> ... -> signal -> postspeech-lag
 
 In this scenario:
 
 - `prespeechstart` event is generated some milliseconds before the first signal chunk start
 - `speechstart` event is generated when a first speech chunk start 
-- `speechstop` event is generated when a successive speech is followed by a pause long `postspeech_lag` msecs
+- `speechstop` event is generated when a successive speech is followed by a pause long *postspeech-lag* msecs
 - `speechabort` event is generated when an initial speech chunk has too low volume or is too short.
 
 ```
@@ -363,7 +379,7 @@ In this scenario:
 |                                                                              |
 prespeechstart                                                        speechstop
 
-<------------------------- sppech recording message --------------------------->
+<------------------------- speech recording message --------------------------->
 ```
 
 ```javascript
@@ -391,29 +407,41 @@ function loop, every e.g. 50 msecs.
 But that's critical because in that way the recording start "abruptly", 
 possibly truncating few milliseconds of the initial speech.
  
- The adopted solution is, instead of recording from the `speechstart` event,
+The adopted solution is, instead of recording from the `speechstart` event,
 to foresee a repeated emission of `prespeechstart` events (e.g. every 500 msecs). 
 The speech start "virtually" recording when `prespeechstart` event trigger.
 The preemptive started recording continue until the real start of first signal chunk (`speechstart`)
 and continue until `speechstop` event that successfully end the speech recording.
 Or the `speechabort` event terminate the recording, rescheduling a new `prespeechstart`.
 
+```
+                █ chunk 1
+              █ █
+            █ █ █                           
+          █ █ █ █ █   █                  chunk 2      █
+          █ █ █ █ █   █ █       █       █             █      chunk 3
+          █ █ █ █ █ █ █ █       █ █   █ █ █           █ █   █
+        █ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █         █ █ █ █ █ █ █
+^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ sample clock
+^       ^       ^       ^       ^       ^       ^       ^       ^       ^ prespeech clock     
+|                                               |                       |
+prespeechstart                                  deleted prespeechstart  speechstop
+```
 
 ## Parameters tuning
 
 The WeBAD algorithm is based upon a set of parameters:
 
 | parameter | description | default value |
-| --------- | ----------- | ------------- |
+| :-------: | ----------- | :-----------: |
 | `SAMPLE_POLLING_MSECS` | polling time clock in milliseconds. Is the sampling rate to run speech detection calculations | 50 |
 | `MAX_INTERSPEECH_SILENCE_MSECS` | elapsed time in milliseconds of silence (pause) between continuous blocks of signal | 600 |
 | `POST_SPEECH_MSECS` | elapsed time in milliseconds of silence after the last speech chunk | 600 |
 | `PRE_RECORDSTART_MSECS` | elapsed time in milliseconds before the speechstart event | 600 |
-| `MIN_SIGNAL_DURATION ` | minimum elapsed time in millisecond for an audio signal block | 400 |
+| `MIN_SIGNAL_DURATION` | minimum elapsed time in millisecond for an audio signal block | 400 |
 | `MIN_AVERAGE_SIGNAL_VOLUME` | minimum volume vale (in average) of a signal block chain | 0.04 | 
-| `VOLUME_SIGNAL ` |  | 0.02 |
-| `VOLUME_SILENCE ` |  | 0.001 |
-| `VOLUME_MUTE ` |  | 0.00001 |
+| `VOLUME_SIGNAL` | Volume threshold level for signal | 0.02 |
+| `VOLUME_MUTE` |  Volume threshold level for no-signal (~0) | 0.00001 |
 
 
 ## Architecture
@@ -477,24 +505,28 @@ $ git clone https://github.com/solyarisoftware/webad
 
 ## Run the demo 
 
-On top of the WeBAD JS library, this repo supply a web page demo that how manage events generated by WeBAD.
-A very basic HTML 
-- show events changes 
+On top of the WeBAD JS library, 
+this repo supply a web page demo that how manage events generated by WeBAD.
+A very basic web page that:
+- shows events changes 
 - record speech in real-time and plays the recorded audio/speech as soon the recording finish.
 
 
-You can run the demo on your localhost, by example using firefox browser:
+You can run the demo on your localhost, by example using firefox browser (suggested choice):
 
 ```bash
 $ cd webad
 $ firefox demo.html
 ```
 
-Or you can run the demo through an HTTPS server (for security reasons, Web Audio API doesn't run on HTTP)
+Or you can run the demo through an HTTPS server (for security reasons, Web Audio API doesn't run on HTTP). 
+
 To serve HTTPS static pages, I'm happy with [http-server package](https://github.com/http-party/http-server), 
 using with this setup (of course you need a certificate, maybe selfsigned):
 
 ```
+$ npm install -g http-server
+
 $ http-server --ssl --cert selfsigned.cert --key selfsigned.key --port 8443
 
 Starting up http-server, serving ./ through https
@@ -507,10 +539,8 @@ Hit CTRL-C to stop the server
 On the browser, goto the page: `https://<your_server_IP>:8443/demo.html`
 
 The demo optionally print console logs details.
-
-> WARNING: 
-> Be aware that console.logs are cpu-consuming (e.g. a print every 80 msecs). 
-> Use them just for debug. 
+Be aware that console.logs are cpu-consuming (e.g. with console.log every `SAMPLE_POLLING_MSECS` msecs). 
+Use them just for debug. 
 
 Example of a successful recording:
 ```
@@ -643,6 +673,28 @@ Average Signal level     : 0.0652
 Average Signal dB        : -24
 ```
 
+### Browser issues when using the (demo) web audio APIs
+
+- Firefox 👏👏👏👏
+
+  All run smoothly! (Tested on Windows 10 / Linux Ubuntu 20.04 Desktop)
+
+- Chrome/Brave
+
+  A bunch of issues:
+
+  - `The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu`
+    Workaround: The browser engine needs user to push an button to allow Web Audio API. 
+    Weird for me / To be investigate. See: https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio
+
+  - MediaRecorder stop raise the error: 
+    `Failed to execute 'stop' on 'MediaRecorder': The MediaRecorder's state is 'inactive'`
+    Workaround found (see: demoAudioRecorder.js).
+
+### Video demo: continuous mode speech detection on a mobile phone
+
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/aY1eZLPZhDw/0.jpg)](https://www.youtube.com/watch?v=aY1eZLPZhDw&feature=youtu.be "continuous mode speech detection on a mobile phone")
+
 
 ## Use WeBAD library in your application
 
@@ -653,15 +705,15 @@ Average Signal dB        : -24
     <body>
       <script src="volume-meter.js"></script>
       <script src="audioDetectionConfig.js"></script>
-    <script src="audioDetection.js"></script>
-    <script src="audioStream.js"></script>
+      <script src="audioDetection.js"></script>
+      <script src="audioStream.js"></script>
     </body>
   </html>
   ```
 
 - Manage events generated by WeBAD in your web browser application.
  
-  > BTW, The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
+  The `demoAudioDetectionListeners.js` show how WeBAD events are consumed. 
 
 
 ## To do
@@ -684,20 +736,22 @@ Average Signal dB        : -24
 
 ## How to contribute
 
-Any contrinute is welcome. Maybe you want to: 
+Any contribute is welcome. Maybe you want to: 
 - open a new discussion a specific topic opening a post [here](https://github.com/solyarisoftware/WeBAD/discussions)
 - contact me via [e-mail](mailto:giorgio.robino@gmail.com)
 
 
-## Acknowledgments
+## Credits
 
-I used the volume-meter Web Audio API scriptprocessor 
-written by Chris Wilson here: https://github.com/cwilso/volume-meter 
-👏👏👏👏
+- Foundation component: I used the volume-meter Web Audio API script processor,
+  written by Chris Wilson here available: https://github.com/cwilso/volume-meter 
+  👏👏👏👏
+
+- Article: [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
 
 
 ## License
 
-MIT (c) Giorgio Robino
+[MIT](LICENSE.txt) (c) Giorgio Robino
 
 ---
