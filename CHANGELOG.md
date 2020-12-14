@@ -1,9 +1,10 @@
 # Changelog
 
-## v. 0.3.2
+## v. 0.3.3
 
 - README documentation updated 
 - video demo added 
+- demo shows graphically (in orange) when the recorded audio is played back
 
 ## v. 0.3.0
 

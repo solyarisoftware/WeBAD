@@ -25,22 +25,15 @@ WeBAD supply a solution for two specific scenarios:
    You want to record the audio blob from when the user start to talk, 
    to when the user finish the spoken utterance! 
 
-   | [![](https://img.youtube.com/vi/aY1eZLPZhDw/0.jpg)](https://www.youtube.com/watch?v=aY1eZLPZhDw&feature=youtu.be "continuous mode speech detection on a mobile phone")|
+   | [![](https://img.youtube.com/vi/aY1eZLPZhDw/0.jpg)](https://www.youtube.com/watch?v=aY1eZLPZhDw&feature=youtu.be "continuous listening mode speech detection on a mobile phone, using WeBAD")|
    |:--:|
-   | Instant gratification video demo: continuous mode speech detection on a mobile phone |
+   | Instant gratification video demo: continuous listening mode using WeBAD |
 
 
 ## What's a speech message?
 
 Consider user talking with the computer. I define *speech* an audio message 
 (a binary Blob in some codec format) to be elaborated by some backend voicebot logic. 
-
-> With *audio message elaboration* I means a text transcript with an ASR engine 
-> (followed by a dialog manager, see my own [NaifJs](https://github.com/solyarisoftware/naifjs). 
-> That's out of scope of current project.
-> We here need just to collect  the audio input, from a web browser client, 
-> to be submitted to a backend engine.
-> Se also the [Architecture](#architecture) paragraph.
 
 In terms of syntactical analysis, for *speech* I mean the pronunciation of 
 - A letter, a number, a monosyllable (the minimal pronounceable item), by example: *1*, *3*, *I*, *c*, *yes*, *hey*
@@ -154,7 +147,7 @@ Let's see some possible scenarios:
 
       ```
 
-    -  Open (pressed) push-button 
+    - Open (pressed) push-button 
 
       When the user want to talk, he push the PTT push-button.
       The exit signal become >> 0
@@ -228,8 +221,8 @@ and generates these javascript events:
 
   | event | description | 
   | :---: | ----------- |
-  | `unmutedmic`| microphone is UNMUTED (passing from OFF to ON)|
-  | `mutedmic`| microphone is MUTED (passing from ON to OFF)|
+  | `unmutedmic`| microphone is unmuted (passing from OFF to ON)|
+  | `mutedmic`| microphone is muted (passing from ON to OFF)|
 
 - RECORDING EVENTS
 
@@ -332,7 +325,7 @@ there are some different possible ways to record speech:
   - `speechstop` stop speech recording
 
 
-### Push-to-talk recording
+### HW-button push-to-talk recording
 
 Push to talk is simple. It's the user that decides when the speech begin
 and when the speech end, just pressing and releasing the button!
@@ -368,7 +361,7 @@ document.addEventListener('mutedmic', event => {
 
 ### Continuous-listening recording
 
-The continuous listening mode is more challenging. A speech is usually determined 
+The continuous listening mode is challenging. A speech is usually determined 
 by a sequence of signal chunks (letter/words/sentences) interlaced by pauses (silence).
 
 prespeech-lag -> signal -> pause -> signal -> pause -> ... -> signal -> postspeech-lag
@@ -419,15 +412,16 @@ document.addEventListener('speechabort', event => {
 as soon a signal (exceeding of a threshold) is detected in the `audioDetection()` 
 function loop, every e.g. 50 msecs.
 
-But that's critical because in that way the recording start "abruptly", 
+But that's naive because in that way the recording start "abruptly", 
 possibly truncating few milliseconds of the initial speech.
  
 The adopted solution is, instead of recording from the `speechstart` event,
-to foresee a repeated emission of `prespeechstart` events (e.g. every 500 msecs). 
-The speech start "virtually" recording when `prespeechstart` event trigger.
-The preemptive started recording continue until the real start of first signal chunk (`speechstart`)
+to foresee a cyclic emission of `prespeechstart` events (e.g. every 500 msecs). 
+
+The recording repeatedly starts when `prespeechstart` event triggers.
+The preemptive started recording continue until the real start of the first signal chunk (`speechstart`)
 and continue until `speechstop` event that successfully end the speech recording.
-Or the `speechabort` event terminate the recording, rescheduling a new `prespeechstart`.
+Or the `speechabort` event terminates the recording, re-enabling the `prespeechstart` clock.
 
 ```
                 █ chunk 1
@@ -443,9 +437,35 @@ Or the `speechabort` event terminate the recording, rescheduling a new `prespeec
 prespeechstart                                  deleted prespeechstart  speechstop
 ```
 
+So we have to clock in-sync: 
+- sample-clock: the base time clock (every `SAMPLE_POLLING_MSECS`)
+- prespeech-clock: implemented as a multiple of sample-clock
+
+The preemptive-recording solution is not perfect. 
+Suppose that sample-clock is set to 50 msecs and prespeech-clock (prespeech-lag) is set to 500 msecs.
+The initial chunk of a speech occurs in a random instant within the range 0-500 msecs.
+The worst case is when `prespeechstart` `speechstart` overlap, as shown in figure here below:
+
+```
+        █ chunk 1
+      █ █
+    █ █ █                           
+  █ █ █ █ █   █                               █
+  █ █ █ █ █   █ █       █       █             █                
+  █ █ █ █ █ █ █ █       █ █   █ █ █           █ █   █
+█ █ █ █ █ █ █ █ █ █ █   █ █ █ █ █ █ █         █ █ █ █ █ █ █
+^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ sample clock
+^       ^       ^       ^       ^       ^       ^       ^       ^ prespeech clock     
+|
+speechstart
+^
+|
+prespeechstart                                                                    
+```
+
 ## Parameters tuning
 
-The WeBAD algorithm is based upon a set of parameters:
+The WeBAD algorithm is based upon a set of configuration parameters:
 
 | parameter | description | default value |
 | :-------: | ----------- | :-----------: |
@@ -475,8 +495,8 @@ The WeBAD algorithm is based upon a set of parameters:
 |  |                         WeBAD                         |  |
 |  |  +-------------+   +-------------+   +-------------+  |  |
 |  |  |             |   |             |   |             |  |  |
-|  |  |  volume     |   |  audio      |   |  speech     |  |  |
-|  |  |  detection  +--->  detection  +--->  detection  |  |  |
+|  |  |  volume     |   |  levels     |   |  speech     |  |  |
+|  |  |  detection  +--->  classifier +--->  detection  |  |  |
 |  |  |             |   |             |   |             |  |  |
 |  |  +-------------+   +-------------+   +-------------+  |  |
 |  |                                                       |  |
@@ -521,7 +541,7 @@ $ git clone https://github.com/solyarisoftware/webad
 ## Run the demo 
 
 On top of the WeBAD javascript library, 
-this repo supply a web page demo that shows how manage events generated by WeBAD.
+this repository supply a web page demo that shows how manage events generated by WeBAD.
 A very basic web page:
 - shows events changes 
 - record speech in real-time and plays the recorded audio/speech as soon the recording finish.
@@ -536,7 +556,7 @@ $ firefox demo.html
 Or you can run the demo through an HTTPS server (for security reasons, Web Audio API doesn't run on HTTP). 
 
 To serve HTTPS static pages, I'm happy with [http-server package](https://github.com/http-party/http-server), 
-using with this setup (of course you need a certificate, maybe selfsigned):
+using with this setup (of course you need an SSL certificate, maybe self-signed):
 
 ```
 $ npm install -g http-server
@@ -701,11 +721,14 @@ Average Signal dB        : -24
   A bunch of issues:
 
   - `The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://goo.gl/7K7WLu`
-    Workaround: The browser engine needs user to push an button to allow Web Audio API. 
-    Weird for me / To be investigate. See: https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio
 
-  - MediaRecorder stop raise the error: 
-    `Failed to execute 'stop' on 'MediaRecorder': The MediaRecorder's state is 'inactive'`
+    See: https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio
+    Workaround found: The browser needs user to push an button to allow Web Audio API. 
+    Weird for me / To be investigated. 
+
+  - `Failed to execute 'stop' on 'MediaRecorder': The MediaRecorder's state is 'inactive'`
+ 
+    MediaRecorder stop raise the error above. 
     Workaround found (see: demoAudioRecorder.js).
 
 
@@ -735,27 +758,42 @@ Average Signal dB        : -24
   - add input boxes for significant parameters, 
     allowing to modify parameters in real-time
 
-  - The demo web page could act as a **parameter setting tuning tool**.
+  - the demo web page could act as a **parameter setting tuning tool**.
     Interactive parameter changes would transform the demo into a tool to tune/calibrate parameters
 
   - made a visually decent page 
+
+  - add a push-to-talk hotkey demo
+
+  - add optionally an 'enable audio input' / 'disable audio input' button.
 
 - Add clipping event
 
 - Better explain the parameter tuning issues
 
-- Please Giorgio, remove global vars and transform the ugly "all-see-all" in ES6 JS modules!
+- Please Giorgio, remove global vars and transform the ugly "all-see-all" javascript files in ES6 JS modules!
 
 - WeBAD just triggers above listed events. 
-
   What is now out of scope of this release:
   - how to use events to record the audio recordings
   - how to use/process blob audio messages 
     (probably you want to send them to a backend server via socketio or websockets).
+    A better solution could be to provide the speech result as data payload of a final `speechaudioavailable`.
+    To be investigated.
 
-## Discussion / Open points
 
-- Does continuous listening includes wake-word UI?
+## Discussion
+
+- **Push-to-talk versus continuous listening**
+
+  Push-to-talk is a simple UX. WeBAD solve the external mic + HW push-button case. 
+  Just catch `unmutedmic` event to start recording, `mutedmic` event to stop recording.
+  That's easy!
+
+  Continuous listening is hard! Not just technically, but above all from the UX perspective.
+  The proposed solution is just a rough proof-of-concept.
+
+- **Does continuous listening includes wake-word UX?**
 
   An interesting plus point of continuous listening is that it "includes" the wake word mechanics.
   In a standard wake-word approach, the voicebot is activated with a unique associated wake-word.
@@ -777,6 +815,35 @@ Average Signal dB        : -24
   - *Alexa, what time is it?*
   - *Ok Google, tell-me a joke*
 
+- **WeBAD doesn't make any real speech detection?**
+
+  That's honestly true. 
+  The algorithm I implemented assumes that audio detection match with speech detection. 
+  That's true just in restricted contexts, by example because user is equipped 
+  with an external proximity mic that capture mainly his voice.
+  In general detected signal chunks can contain any audio, any sound, not just speech.
+  So the signal chunk detection could ne improved with a real *speech detector*, 
+  maybe implemented as a simple realtime ML classifier that distinguish basically two classes: 'speech' / 'nospeech'.
+  To be investigated.
+
+- **WeBAD doesn't make any speech recognition / speech understanding**
+
+  WeBAD doesn't make any text transcript with an ASR engine, 
+  That's out of scope of current project.
+  We here need just to collect the audio input, from a web browser client, 
+  to be submitted to a backend engine. See also the [Architecture](#architecture) paragraph.
+
+- **Does WeBAD continuous listening allows barge-in mode?**
+
+  The current implementation assumes a "common" turn-based half-duplex human-computer interaction. 
+  Honestly this is a simplistic / not so natural way humans conversate.
+  So in theory WeBAD run in a true continuous mode, allowing a barge-in, 
+  but just in case the computer audio feedback (a response / chatbot turn  reply) is played on headphones.
+  Audio played back through loudspeakers create an issue, because it re-enter in the microphone, 
+  creating at the end of the day a feedback / infinite loop.
+  That's why the demo require a rigid half-duplex mode: when the computer talk, the continuous listening is suspended. 
+  Any idea to solve the issue?
+
 
 ## How to contribute
 
@@ -788,7 +855,8 @@ Any contribute is welcome. Maybe you want to:
 
 - Hotkey
 
-  Article: [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
+  [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
+  [Why hasn’t the iPhone moment happened yet for voice UIs](https://www.speechly.com/blog/real-time-voice-user-interfaces/)
 
 - Silence detection
 

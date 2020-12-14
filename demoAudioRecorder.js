@@ -42,6 +42,11 @@ function onRecordingReady(e) {
     // 
     suspendRecording()
 
+    document.querySelector('#audiostatuscell').style.background = 'orange'
+    document.querySelector('#audiostatuscell').style.color = 'black'
+    document.querySelector('#audiostatus').style.background = 'orange'
+    document.querySelector('#audiostatus').textContent = 'playback'
+
     const audio = document.getElementById('audio')
 
     // e.data contains a blob representing the recording
