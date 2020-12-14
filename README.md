@@ -25,6 +25,10 @@ WeBAD supply a solution for two specific scenarios:
    You want to record the audio blob from when the user start to talk, 
    to when the user finish the spoken utterance! 
 
+   | [![](https://img.youtube.com/vi/aY1eZLPZhDw/0.jpg)](https://www.youtube.com/watch?v=aY1eZLPZhDw&feature=youtu.be "continuous mode speech detection on a mobile phone")|
+   |:--:|
+   | Instant gratification video demo: continuous mode speech detection on a mobile phone |
+
 
 ## What's a speech message?
 
@@ -106,11 +110,13 @@ Let's see some possible scenarios:
   Currently this is considered the common way to push speech messages on a voice interfaced system.
   Wake word detection, especially if you want to have your own custom word sequences, 
   need a specialized training of a neural net and a cpu-intensive run-time engine 
-  that has to run on the browser. WeBAD just escapes from this approach.
+  that has to run on the browser. 
+
+  > WeBAD just escapes from wake word approach. Some solutions in [references](#references)
 
 - (2) Push-to-talk
 
-  That's the traditional/safe way to generate audio messages 
+  That's the traditional reliable way to generate audio messages 
   (see radio mobile/walkie-talkie). 
   The user push a button, start to talk, release the button when finished to talk.
   Note that push to talk could be implemented on the browser in two way:
@@ -125,13 +131,51 @@ Let's see some possible scenarios:
     the user press a key or touch a (button on the) screen to talk.
     But that is not a touch-less / keyboard-less solution.
 
-  - (2.2) **Hardware-button push-to-talk**
+  - (2.2) **Hardware push-button push-to-talk**
 
-    The user press a real/hardware button, that maybe mute/un-mute an external mic.
+    The user press a real/hardware push-button, that mute/un-mute an external mic.
+    Here a simplified schematics about how the mic setup:
+
+    - Normally-closed push-button 
+
+      PTT push-button short-circuited to ground (default): exit signal is ~0
+
+      ```
+         .-----------+-----------. (+) 
+         |           |           |
+      .--+--.        +           .------>                   
+      | mic |        |                    jack out male mono (mini jack 3.5mm)
+      .--+--.        |           .------>        
+         |           +           |
+         .-----------+-----------. ground
+                     ^
+                     |
+                     normally-closed PTT push-button 
+
+      ```
+
+    -  Open (pressed) push-button 
+
+      When the user want to talk, he push the PTT push-button.
+      The exit signal become >> 0
+
+      ```
+         .-----------+-----------. (+) 
+         |           |           |
+      .--+--.        +           .------>                   
+      | mic |          /                  jack out male mono (mini jack 3.5mm)
+      .--+--.         /          .------>        
+         |           +           |
+         .-----------+-----------. ground
+                     ^
+                     |
+                     Open PTT push-button
+      ```
+
 
 - (3) **Continuous listening** (without wake-word detection)
 
-  A great experience is maybe the *continuous listening* mode, 
+  A better voice-interface user experience is maybe through a *continuous listening* mode, 
   where audio is detected in real-time, 
   just talking in front of the PC (or the tablet/ mobile phone / handset).
   Namely: avoiding any wake-word detection algorithm.
@@ -140,8 +184,6 @@ WeBAD focuses on the two last scenarios (2.2) and (3).
 
 
 ## Which are the possible applications?
-
-Let's focus on these two specific application contexts:
 
 - **Mobile device voice-interface client for operators that can't use the touch-screen**
 
@@ -158,28 +200,6 @@ Let's focus on these two specific application contexts:
   (or a mobile phone) in a pretty quiet environment, 
   by example in a room apartment or a quite office, or inside a vehicle.
 
-### Does continuous listening includes wake-word UI?
-
-An interesting plus point of continuous listening is that it "includes" the wake word mechanics.
-In a standard wake-word approach, the voicebot is activated with a unique associated wake-word.
-Two common examples are:
-
-- *Alexa, do this...*
-- *Ok Google, do that...*
-
-But with continuous listening, the computer-side interlocutor 
-is no more determined by a single wake word itself, but it's part of the utterance
-to be elaborated by the voicebot. 
-That's smart because WeBAD is now a single interface for multiple *interlocutor-bots*. 
-
-Suppose a voice metabot (main bot) made by different component voicebots, 
-maybe each one dedicated to specific skills.
-The user could invoke each different subsystems in an natural way:
-
-- *Computer, please slow down velocity*
-- *Alexa, what time is it?*
-- *Ok Google, tell-me a joke*
- 
 
 ## WeBAD Event-bus API solution  
 
@@ -200,7 +220,7 @@ and generates these javascript events:
   | `mute` | audio volume is almost zero, the mic is off |
   | `silence` | audio volume is pretty low, the mic is on but there is not speech |
   | `signal` | audio volume is high, so probably user is speaking |
-  | `clipping` | audio volume is too high, clipping (**TODO**) |
+  | `clipping` | audio volume is too high, clipping. **TODO** |
 
 - MICROPHONE STATUS EVENTS
 
@@ -234,7 +254,7 @@ that trigger events and maintains a current state, with this discrete values:
 | `unmute`     | The micro is open, or unmuted |
 | `silence`    | The microphone is open. Volume is almost silence (less than silence_threshold_value), containing just background noise, not containing sufficient signal power that probabilistically correspond to speech |
 | `signal`     | The signal level is pretty high, probabilistically corresponding to speech |
-| `clipping`   | The signal level is too high (volume is ~= 1) |
+| `clipping`   | The signal level is too high (volume is ~= 1). **TODO** |
 
 ```
        volume
@@ -289,16 +309,15 @@ mute 0.0 +----------------------------------------------------------------------
 unmutemic                                                                     mutemic
 ```
 
-
 ## Recording modes
 
 On the basis of the microphone / hardware configuration available,
 there are some different possible ways to record speech:
 
-- Using an external microphone, bound to a push-to-talk hardware button
+- Using an external microphone, bound to a push-to-talk hardware push-button
 
   In this scenario, the continuous mode could be substituted by a push-to-talk experience,
-  where user has to push a real button every time he want to submit a speech, 
+  where user has to press a real push-button every time he want to submit a speech, 
   releasing the button when he explicitly want to terminate recording.
   To accomplish this case we use two different events:
 
@@ -312,10 +331,6 @@ there are some different possible ways to record speech:
   - `prespeechstart` start speech recording 
   - `speechstop` stop speech recording
 
-> WeBAD just triggers above listed events. What is now out of scope of this project:
-> - how to use events to record the audio recordings
-> - how to use/process blob audio messages 
->   (probably you want to send them to a backend server via socketio or websockets).
 
 ### Push-to-talk recording
 
@@ -398,7 +413,7 @@ document.addEventListener('speechabort', event => {
 })
 ```
 
-#### Continuous listening algorithm details
+#### Preemptive-recording algorithm 
 
 `speechstart` event could seem a good candidate to start speech recording, 
 as soon a signal (exceeding of a threshold) is detected in the `audioDetection()` 
@@ -497,7 +512,7 @@ The WeBAD algorithm is based upon a set of parameters:
 
 ```
 
-## Install
+## Installation
 
 ```bash
 $ git clone https://github.com/solyarisoftware/webad
@@ -505,12 +520,11 @@ $ git clone https://github.com/solyarisoftware/webad
 
 ## Run the demo 
 
-On top of the WeBAD JS library, 
-this repo supply a web page demo that how manage events generated by WeBAD.
-A very basic web page that:
+On top of the WeBAD javascript library, 
+this repo supply a web page demo that shows how manage events generated by WeBAD.
+A very basic web page:
 - shows events changes 
 - record speech in real-time and plays the recorded audio/speech as soon the recording finish.
-
 
 You can run the demo on your localhost, by example using firefox browser (suggested choice):
 
@@ -677,7 +691,10 @@ Average Signal dB        : -24
 
 - Firefox 👏👏👏👏
 
-  All run smoothly! (Tested on Windows 10 / Linux Ubuntu 20.04 Desktop)
+  All run smoothly! Tested on:
+  - Windows 10 personal computer
+  - Linux Ubuntu 20.04 Desktop
+  - Recent Android v.10 mobile phone
 
 - Chrome/Brave
 
@@ -690,10 +707,6 @@ Average Signal dB        : -24
   - MediaRecorder stop raise the error: 
     `Failed to execute 'stop' on 'MediaRecorder': The MediaRecorder's state is 'inactive'`
     Workaround found (see: demoAudioRecorder.js).
-
-### Video demo: continuous mode speech detection on a mobile phone
-
-[![IMAGE ALT TEXT](https://img.youtube.com/vi/aY1eZLPZhDw/0.jpg)](https://www.youtube.com/watch?v=aY1eZLPZhDw&feature=youtu.be "continuous mode speech detection on a mobile phone")
 
 
 ## Use WeBAD library in your application
@@ -718,7 +731,7 @@ Average Signal dB        : -24
 
 ## To do
 
-- [ ] Demo web page
+- Demo web page
   - add input boxes for significant parameters, 
     allowing to modify parameters in real-time
 
@@ -727,11 +740,42 @@ Average Signal dB        : -24
 
   - made a visually decent page 
 
-- [ ] add clipping event
+- Add clipping event
 
-- [ ] Explain the parameter tuning issue
+- Better explain the parameter tuning issues
 
-- [ ] Please Giorgio, remove global vars and transform the ugly "all-see-all" in ES6 JS modules!
+- Please Giorgio, remove global vars and transform the ugly "all-see-all" in ES6 JS modules!
+
+- WeBAD just triggers above listed events. 
+
+  What is now out of scope of this release:
+  - how to use events to record the audio recordings
+  - how to use/process blob audio messages 
+    (probably you want to send them to a backend server via socketio or websockets).
+
+## Discussion / Open points
+
+- Does continuous listening includes wake-word UI?
+
+  An interesting plus point of continuous listening is that it "includes" the wake word mechanics.
+  In a standard wake-word approach, the voicebot is activated with a unique associated wake-word.
+  Two common examples are:
+
+  - *Alexa, do this...*
+  - *Ok Google, do that...*
+
+  But with continuous listening, the computer-side interlocutor 
+  is no more determined by a single wake word itself, but it's part of the utterance
+  to be elaborated by the voicebot. 
+  That's smart because WeBAD is now a single interface for multiple *interlocutor-bots*. 
+
+  Suppose a voice metabot (main bot) made by different component voicebots, 
+  maybe each one dedicated to specific skills.
+  The user could invoke each different subsystems in an natural way:
+
+  - *Computer, please slow down velocity*
+  - *Alexa, what time is it?*
+  - *Ok Google, tell-me a joke*
 
 
 ## How to contribute
@@ -740,14 +784,41 @@ Any contribute is welcome. Maybe you want to:
 - open a new discussion a specific topic opening a post [here](https://github.com/solyarisoftware/WeBAD/discussions)
 - contact me via [e-mail](mailto:giorgio.robino@gmail.com)
 
+## References
+
+- Hotkey
+
+  Article: [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
+
+- Silence detection
+
+  [Web Audio API: how can I detect speech and record until silence, with or without a Push-To-Talk button](https://stackoverflow.com/questions/62114251/web-audio-api-how-can-i-detect-speech-and-record-until-silence-with-or-without/62212935#62212935)
+
+- Wake word detection - some solutions
+
+  - Porcupine
+    https://picovoice.ai/blog/offline-voice-ai-in-a-web-browser/
+ 
+  - Howl
+    https://github.com/castorini/howl
+    https://arxiv.org/pdf/2008.09606.pdf
+
+  - Snowboy
+    https://github.com/kitt-ai/snowboy 
+
+  - Raven
+    https://github.com/rhasspy/rhasspy-wake-raven 
+
+  - Mycroft Precise
+    https://github.com/MycroftAI/mycroft-precise
+
+
 
 ## Credits
 
 - Foundation component: I used the volume-meter Web Audio API script processor,
   written by Chris Wilson here available: https://github.com/cwilso/volume-meter 
   👏👏👏👏
-
-- Article: [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
 
 
 ## License
