@@ -168,11 +168,13 @@ Assuming that we want to use a web browser, let's see some possible scenarios:
   - (2.3) **Hardware USB/Bluetooth foot-switch**
 
     That's a smart "hands-free" solution, maybe useful in industrial operations. 
+
     One ore more foot-switches act as HW hotkeys.
-    An USB temporary foot-switch (e.g. I successfully experimented i
+    An USBi (or Bluetooth) temporary foot-switch (e.g. I successfully experimented 
     [this](http://www.pcsensor.com/foot-switch/usb-metal-single-foot-pedal-switch-for-industrial-machinery-smart-control-factory-test.html)), 
     when pressed generates a `keydown` / `touchstart` HTML DOM event.
     When released the pedal generates a `keyup` / `touchend` HTML DOM event.
+
     This push-to-talk solution is very interesting also because the low CPU/power consumption.
     This case falls into the previous 2.1.
     BTW the pedal could be substituted by and hand-keyboard too.
