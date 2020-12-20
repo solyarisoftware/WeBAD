@@ -897,16 +897,12 @@ Any contribute is welcome. Maybe you want to:
   - Howl
     https://github.com/castorini/howl
     https://arxiv.org/pdf/2008.09606.pdf
-
   - Snowboy
     https://github.com/kitt-ai/snowboy 
-
   - Raven
     https://github.com/rhasspy/rhasspy-wake-raven 
-
   - Mycroft Precise
     https://github.com/MycroftAI/mycroft-precise
-
   - Porcupine
     https://picovoice.ai/blog/offline-voice-ai-in-a-web-browser/
 
