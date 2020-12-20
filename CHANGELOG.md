@@ -1,5 +1,9 @@
 # Changelog
 
+## v. 0.3.4
+
+- README documentation updated with some references and the pedal options.
+
 ## v. 0.3.3
 
 - README documentation updated 

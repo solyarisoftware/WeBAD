@@ -84,7 +84,7 @@ separated by silence chunks. Please note that the complete speech includes also:
   The question is: after how many millisecond of pause after a sequence of words, 
   we consider terminated the spoken sentence? 
 
-We will see that a speech message (made by WeBAD) always includes prespeech-lag and postspeech lag.
+We will see that a speech message (made by WeBAD) always includes prespeech-lag and postspeech-lag.
 
 ```
      I'm     in    love     with    you
@@ -94,15 +94,15 @@ prespeech-lag                          postspeech-lag
 ```
 
 
-## 4 different speech detection VUI approaches
+## Some different speech detection VUI approaches
 
-Let's see some possible scenarios:
+Assuming that we want to use a web browser, let's see some possible scenarios:
 
 - (1) Wake word detection
 
   Currently this is considered the common way to push speech messages on a voice interfaced system.
   Wake word detection, especially if you want to have your own custom word sequences, 
-  need a specialized training of a neural net and a cpu-intensive run-time engine 
+  need a specialized training of a neural net and a CPU-intensive run-time engine 
   that has to run on the browser. 
 
   > WeBAD just escapes from wake word approach. Some solutions in [references](#references)
@@ -114,7 +114,7 @@ Let's see some possible scenarios:
   The user push a button, start to talk, release the button when finished to talk.
   Note that push to talk could be implemented on the browser in two way:
 
-  - (2.1) Software-button push-to-talk (web page *hotkey*) 
+  - (2.1) Software-button (web page *hotkey*) 
 
     That's the simplest approach on GUI interface. Consider a web browser, 
     on a mobile device you have a touch interface, 
@@ -124,7 +124,7 @@ Let's see some possible scenarios:
     the user press a key or touch a (button on the) screen to talk.
     But that is not a touch-less / keyboard-less solution.
 
-  - (2.2) **Hardware push-button push-to-talk**
+  - (2.2) **Hardware push-button**
 
     The user press a real/hardware push-button, that mute/un-mute an external mic.
     Here a simplified schematics about how the mic setup:
@@ -165,6 +165,17 @@ Let's see some possible scenarios:
                      Open PTT push-button
       ```
 
+  - (2.3) **Hardware USB/Bluetooth foot-switch**
+
+    That's a smart "hands-free" solution, maybe useful in industrial operations. 
+    One ore more foot-switches act as HW hotkeys.
+    An USB temporary foot-switch (e.g. I successfully experimented i
+    [this](http://www.pcsensor.com/foot-switch/usb-metal-single-foot-pedal-switch-for-industrial-machinery-smart-control-factory-test.html)), 
+    when pressed generates a `keydown` / `touchstart` HTML DOM event.
+    When released the pedal generates a `keyup` / `touchend` HTML DOM event.
+    This push-to-talk solution is very interesting also because the low CPU/power consumption.
+    This case falls into the previous 2.1.
+    BTW the pedal could be substituted by and hand-keyboard too.
 
 - (3) **Continuous listening** (without wake-word detection)
 
@@ -472,7 +483,7 @@ The WeBAD algorithm is based upon a set of configuration parameters:
 | `SAMPLE_POLLING_MSECS` | polling time clock in milliseconds. Is the sampling rate to run speech detection calculations | 50 |
 | `MAX_INTERSPEECH_SILENCE_MSECS` | elapsed time in milliseconds of silence (pause) between continuous blocks of signal | 600 |
 | `POST_SPEECH_MSECS` | elapsed time in milliseconds of silence after the last speech chunk | 600 |
-| `PRE_RECORDSTART_MSECS` | elapsed time in milliseconds before the speechstart event | 600 |
+| `PRE_RECORDSTART_MSECS` | elapsed time in milliseconds before the `speechstart` event | 600 |
 | `MIN_SIGNAL_DURATION` | minimum elapsed time in millisecond for an audio signal block | 400 |
 | `MIN_AVERAGE_SIGNAL_VOLUME` | minimum volume vale (in average) of a signal block chain | 0.04 | 
 | `VOLUME_SIGNAL` | Volume threshold level for signal | 0.02 |
@@ -573,7 +584,7 @@ Hit CTRL-C to stop the server
 On the browser, goto the page: `https://<your_server_IP>:8443/demo.html`
 
 The demo optionally print console logs details.
-Be aware that console.logs are cpu-consuming (e.g. with console.log every `SAMPLE_POLLING_MSECS` msecs). 
+Be aware that console.logs are CPU-consuming (e.g. with console.log every `SAMPLE_POLLING_MSECS` msecs). 
 Use them just for debug. 
 
 Example of a successful recording:
@@ -815,7 +826,7 @@ Average Signal dB        : -24
   - *Alexa, what time is it?*
   - *Ok Google, tell-me a joke*
 
-- **WeBAD doesn't make any real speech detection?**
+- **But WeBAD doesn't make any real speech detection**
 
   That's honestly true. 
   The algorithm I implemented assumes that audio detection match with speech detection. 
@@ -844,6 +855,10 @@ Average Signal dB        : -24
   That's why the demo require a rigid half-duplex mode: when the computer talk, the continuous listening is suspended. 
   Any idea to solve the issue?
 
+- **CPU usage**
+
+  How to measure the CPU usage?
+
 
 ## How to contribute
 
@@ -851,21 +866,31 @@ Any contribute is welcome. Maybe you want to:
 - open a new discussion a specific topic opening a post [here](https://github.com/solyarisoftware/WeBAD/discussions)
 - contact me via [e-mail](mailto:giorgio.robino@gmail.com)
 
-## References
-
-- Hotkey
-
-  [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
-  [Why hasn’t the iPhone moment happened yet for voice UIs](https://www.speechly.com/blog/real-time-voice-user-interfaces/)
+## References / related projects
 
 - Silence detection
 
   [Web Audio API: how can I detect speech and record until silence, with or without a Push-To-Talk button](https://stackoverflow.com/questions/62114251/web-audio-api-how-can-i-detect-speech-and-record-until-silence-with-or-without/62212935#62212935)
 
-- Wake word detection - some solutions
 
-  - Porcupine
-    https://picovoice.ai/blog/offline-voice-ai-in-a-web-browser/
+- How to use AudioWorklets
+
+  https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_AudioWorklet
+
+- Volume detection using FFT
+
+  https://github.com/otalk/hark
+
+- Volume detection using P5
+-
+  https://p5js.org/reference/#/p5.Amplitude
+
+- Hotkeys
+
+  [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
+  [Why hasn’t the iPhone moment happened yet for voice UIs](https://www.speechly.com/blog/real-time-voice-user-interfaces/)
+
+- Wake word detection - some solutions
  
   - Howl
     https://github.com/castorini/howl
@@ -880,6 +905,8 @@ Any contribute is welcome. Maybe you want to:
   - Mycroft Precise
     https://github.com/MycroftAI/mycroft-precise
 
+  - Porcupine
+    https://picovoice.ai/blog/offline-voice-ai-in-a-web-browser/
 
 
 ## Credits
