@@ -870,30 +870,14 @@ Any contribute is welcome. Maybe you want to:
 
 ## References / related projects
 
-- Silence detection
-
-  [Web Audio API: how can I detect speech and record until silence, with or without a Push-To-Talk button](https://stackoverflow.com/questions/62114251/web-audio-api-how-can-i-detect-speech-and-record-until-silence-with-or-without/62212935#62212935)
-
-
-- How to use AudioWorklets
-
-  https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_AudioWorklet
-
-- Volume detection using FFT
-
-  https://github.com/otalk/hark
-
-- Volume detection using P5
--
-  https://p5js.org/reference/#/p5.Amplitude
-
+- Silence detection [Web Audio API: how can I detect speech and record until silence, with or without a Push-To-Talk button](https://stackoverflow.com/questions/62114251/web-audio-api-how-can-i-detect-speech-and-record-until-silence-with-or-without/62212935#62212935)
+- How to use [AudioWorklets](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_AudioWorklet)
+- Volume detection using FFT https://github.com/otalk/hark
+- Volume detection using P5 https://p5js.org/reference/#/p5.Amplitude
 - Hotkeys
-
-  [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
-  [Why hasn’t the iPhone moment happened yet for voice UIs](https://www.speechly.com/blog/real-time-voice-user-interfaces/)
-
+  - [Speechly Guidelines for Creating Productive Voice-Enabled Apps](https://www.speechly.com/blog/voice-application-design-guide/)
+  - [Why hasn’t the iPhone moment happened yet for voice UIs](https://www.speechly.com/blog/real-time-voice-user-interfaces/)
 - Wake word detection - some solutions
- 
   - Howl
     https://github.com/castorini/howl
     https://arxiv.org/pdf/2008.09606.pdf
