@@ -66,15 +66,8 @@ window.onload = function() {
 
     // Attempt to get audio input
     try {
-        // monkeypatch getUserMedia
-        navigator.getUserMedia = 
-        navigator.getUserMedia ||
-        navigator.webkitGetUserMedia ||
-        navigator.mozGetUserMedia;
-
-
         // ask for an audio input
-        navigator.getUserMedia(
+        navigator.mediaDevices.getUserMedia(
         {
             'audio': {
                 'mandatory': {
@@ -85,7 +78,8 @@ window.onload = function() {
                 },
                 'optional': []
             },
-        }, audioStream, didntGetStream);
+        }).then(audioStream)
+        .catch(didntGetStream);
     } catch (e) {
         alert('getUserMedia threw exception :' + e);
     }
